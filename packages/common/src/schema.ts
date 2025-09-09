@@ -1,0 +1,44 @@
+import { bigint, char, integer, pgTable, serial, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
+
+// Tables
+export const tokens = pgTable("tokens", {
+  id: serial("id").primaryKey(),
+
+  // Token metadata - nullable to support L2 registrations found before L1
+  symbol: varchar("symbol", { length: 20 }),
+  name: varchar("name", { length: 100 }),
+  decimals: smallint("decimals"),
+
+  // Ethereum L1 address (0x + 40 hex chars = 42 total)
+  l1Address: char("l1_address", { length: 42 }).unique(),
+
+  // Aztec L2 address (0x + 64 hex chars = 66 total)
+  l2Address: char("l2_address", { length: 66 }).unique(),
+
+  // Registration tracking
+  l1RegistrationBlock: bigint("l1_registration_block", { mode: "number" }),
+  l2RegistrationBlock: bigint("l2_registration_block", { mode: "number" }),
+  l1RegistrationTx: varchar("l1_registration_tx", { length: 66 }),
+  l2RegistrationTxIndex: integer("l2_registration_tx_index"),
+  l2RegistrationLogIndex: integer("l2_registration_log_index"),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const blockProgress = pgTable("block_progress", {
+  id: serial("id").primaryKey(),
+  chain: varchar("chain", { length: 10 }).notNull().unique(), // 'L1' or 'L2'
+  lastScannedBlock: bigint("last_scanned_block", { mode: "number" }).notNull().default(0),
+  lastScanTimestamp: timestamp("last_scan_timestamp", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Type exports
+export type Token = typeof tokens.$inferSelect;
+export type NewToken = typeof tokens.$inferInsert;
+
+export type BlockProgress = typeof blockProgress.$inferSelect;
+export type NewBlockProgress = typeof blockProgress.$inferInsert;

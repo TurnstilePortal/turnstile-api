@@ -1,0 +1,43 @@
+{
+	"name": "@turnstile-portal/collector",
+	"version": "0.0.0",
+	"description": "Blockchain data collector for Ethereum L1 and Aztec L2",
+	"private": true,
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx src/index.ts",
+		"start": "node dist/index.js",
+		"test": "vitest --run",
+		"coverage": "vitest --run --coverage",
+		"cli": "tsx src/cli.ts",
+		"test:l1": "tsx src/cli.ts --l1",
+		"test:l2": "tsx src/cli.ts --l2",
+		"test:both": "tsx src/cli.ts --both",
+		"lint": "biome lint --fix",
+		"format": "biome format --fix",
+		"check": "biome check --fix"
+	},
+	"author": "",
+	"license": "Apache-2.0",
+	"dependencies": {
+		"@aztec/aztec.js": "1.2.1",
+		"@aztec/l1-artifacts": "1.2.1",
+		"@aztec/stdlib": "1.2.1",
+		"@electric-sql/pglite": "^0.3.8",
+		"@turnstile-portal/api-common": "workspace:^",
+		"@turnstile-portal/aztec-artifacts": "^0.4.7",
+		"@turnstile-portal/l1-artifacts-abi": "^0.4.7",
+		"@turnstile-portal/turnstile.js": "^0.4.7",
+		"commander": "^14.0.0",
+		"dotenv": "^17.2.2",
+		"drizzle-orm": "^0.44.5",
+		"pg": "^8.16.3",
+		"viem": "^2.37.5"
+	},
+	"devDependencies": {
+		"@types/node": "^24.3.1",
+		"@types/pg": "^8.15.5",
+		"vitest": "^3.2.4"
+	}
+}

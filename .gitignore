@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+api/api
+collector/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.mainnet
+!.env.testnet
+!.env.sandbox
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+collector/generated/
+api/internal/db/generated/
+
+# Test coverage
+coverage/
+*.cover
+*.coverage
+.coverage
+
+# Temporary files
+tmp/
+temp/
+
+tsconfig.tsbuildinfo

@@ -1,0 +1,51 @@
+{
+  "name": "Turnstile API Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
+  "mounts": [
+    {
+      "target": "${containerWorkspaceFolder}/collector/node_modules",
+      "type": "volume"
+    },
+    {
+      "target": "/home/vscode/.pnpm-store",
+      "type": "volume"
+    },
+    {
+      "source": "${localEnv:HOME}/.claude/",
+      "target": "/home/vscode/.claude",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.claude.json",
+      "target": "/home/vscode/.claude.json",
+      "type": "bind"
+    }
+  ],
+  "containerEnv": {
+    "npm_config_store_dir": "/home/vscode/.pnpm-store"
+  },
+  "onCreateCommand": {
+    "setup": "mount | egrep 'pnpm-store|node_modules' | awk '{print $3}' | sudo xargs chown `id -u`:`id -g`"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "installTools": "false"
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome",
+        "vitest.explorer",
+        "bierner.markdown-mermaid",
+        "github.vscode-github-actions"
+      ],
+      "dev.containers.mountWaylandSocket": false
+    }
+  },
+  "postCreateCommand": {
+    "pnpm": "pnpm install"
+  }
+}
