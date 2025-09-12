@@ -1,5 +1,5 @@
 {
-  "id": "b93fd43a-4de2-4644-92d2-5e97391e7f1a",
+  "id": "6b2ed6d1-8969-4013-ac8e-2f91e83fc40d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -104,6 +104,25 @@
           "primaryKey": false,
           "notNull": false
         },
+        "l1_allow_list_status": {
+          "name": "l1_allow_list_status",
+          "type": "l1_allow_list_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l1_allow_list_proposal_tx": {
+          "name": "l1_allow_list_proposal_tx",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l1_allow_list_resolution_tx": {
+          "name": "l1_allow_list_resolution_tx",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "l1_registration_block": {
           "name": "l1_registration_block",
           "type": "bigint",
@@ -173,7 +192,18 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.l1_allow_list_status": {
+      "name": "l1_allow_list_status",
+      "schema": "public",
+      "values": [
+        "UNKNOWN",
+        "PROPOSED",
+        "ACCEPTED",
+        "REJECTED"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},

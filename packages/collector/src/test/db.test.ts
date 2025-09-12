@@ -5,6 +5,7 @@ import {
   destroyDatabase,
   getDatabase,
   setDatabase,
+  storeL1TokenAllowListEvents,
   storeL1TokenRegistrations,
   storeL2TokenRegistrations,
 } from "../db";
@@ -146,6 +147,75 @@ describe("Database Module", () => {
       expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           target: tokens.l1Address,
+        }),
+      );
+    });
+  });
+
+  describe("storeL1TokenAllowListEvents", () => {
+    it("should insert new tokens with allowlist data", async () => {
+      const mockDb = {
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockReturnThis(),
+        onConflictDoUpdate: vi.fn(),
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
+      const events: NewToken[] = [
+        {
+          l1Address: "0x123",
+          l1AllowListStatus: "PROPOSED",
+          l1AllowListProposalTx: "0xabc",
+        },
+      ];
+
+      await storeL1TokenAllowListEvents(events);
+
+      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          l1Address: "0x123",
+          l1AllowListStatus: "PROPOSED",
+          l1AllowListProposalTx: "0xabc",
+          l1AllowListResolutionTx: undefined,
+        }),
+      );
+      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: tokens.l1Address,
+          set: expect.objectContaining({
+            l1AllowListStatus: "PROPOSED",
+          }),
+        }),
+      );
+    });
+
+    it("should update existing tokens with allowlist data without overwriting registration data", async () => {
+      const mockDb = {
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockReturnThis(),
+        onConflictDoUpdate: vi.fn(),
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
+      const events: NewToken[] = [
+        {
+          l1Address: "0x123",
+          l1AllowListStatus: "ACCEPTED",
+          l1AllowListResolutionTx: "0xdef",
+        },
+      ];
+
+      await storeL1TokenAllowListEvents(events);
+
+      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
+      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: tokens.l1Address,
+          set: expect.objectContaining({
+            l1AllowListStatus: "ACCEPTED",
+            l1AllowListResolutionTx: "0xdef",
+          }),
         }),
       );
     });

@@ -29,6 +29,7 @@ describe("L1Collector", () => {
       rpcUrl: "https://sepolia.infura.io/v3/test",
       portalAddress: "0x1234567890123456789012345678901234567890",
       inboxAddress: "0x0987654321098765432109876543210987654321",
+      allowListAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
       startBlock: 1000,
       chunkSize: 100,
       network: "sepolia",
@@ -43,6 +44,8 @@ describe("L1Collector", () => {
         rpcUrl: "https://sepolia.infura.io/v3/test",
         portalAddress: "0x1234567890123456789012345678901234567890",
         inboxAddress: "0x0987654321098765432109876543210987654321",
+        allowListAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        network: "sepolia",
       };
 
       const collector = new L1Collector(minimalConfig);

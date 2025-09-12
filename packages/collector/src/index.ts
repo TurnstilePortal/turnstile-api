@@ -12,8 +12,9 @@ async function main() {
   const service = new CollectorService({
     l1: {
       rpcUrl: config.l1.rpcUrl,
-      portalAddress: config.l1.portalAddress as `0x${string}`,
-      inboxAddress: config.l1.inboxAddress as `0x${string}`,
+      portalAddress: config.l1.portalAddress,
+      inboxAddress: config.l1.inboxAddress,
+      allowListAddress: config.l1.allowListAddress,
       startBlock: config.l1.startBlock,
       chunkSize: config.l1.chunkSize,
       network: config.l1.network,
