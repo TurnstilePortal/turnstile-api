@@ -8,7 +8,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY packages ./packages
 
 RUN pnpm install --filter ${SERVICE}... --frozen-lockfile
-RUN pnpm --filter ${SERVICE} build
+RUN pnpm --filter ${SERVICE}... build
 RUN pnpm deploy --filter ${SERVICE} --prod /out
 
 FROM node:trixie-slim AS runtime

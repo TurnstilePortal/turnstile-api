@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+**/node_modules/
 
 # Development files
 .env*
@@ -16,6 +17,9 @@ vitest.config.ts
 
 # Build artifacts
 dist/
+**/dist/
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
 *.log
 *.tmp
 *.swp

@@ -54,7 +54,7 @@ jobs:
       - name: Get package versions
         id: versions
         run: |
-          echo "api_common_version=$(jq -r .version ./packages/common/package.json) >> $GITHUB_OUTPUT
+          echo "api_common_version=$(jq -r .version ./packages/common/package.json)" >> $GITHUB_OUTPUT
           echo "api_service_version=$(jq -r .version ./packages/api-service/package.json)" >> $GITHUB_OUTPUT
           echo "collector_version=$(jq -r .version ./packages/collector/package.json)" >> $GITHUB_OUTPUT
 

@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       published: ${{ steps.changesets.outputs.published }}
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      versionChanged: ${{ steps.version-check.outputs.version_changed }}
     permissions:
       contents: write
       pull-requests: write
@@ -40,6 +42,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check for version changes
+        id: version-check
+        run: |
+          if git diff HEAD^ HEAD --name-only | grep -E "package\.json$"; then
+            echo "Files changed:"
+            git diff HEAD^ HEAD --name-only | grep -E "package\.json$"
+
+            # Check if any package.json has version changes
+            VERSION_CHANGED=false
+            for file in $(git diff HEAD^ HEAD --name-only | grep -E "package\.json$"); do
+              if git diff HEAD^ HEAD -- "$file" | grep -E "^\+.*\"version\":"; then
+                echo "Version changed in $file"
+                VERSION_CHANGED=true
+              fi
+            done
+
+            echo "version_changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
+          else
+            echo "No package.json files changed"
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
@@ -53,7 +77,8 @@ jobs:
   docker-build:
     name: Build Docker Images
     needs: release
-    if: needs.release.outputs.published == 'true'
+    # Run when packages are published OR when version changes are detected
+    if: needs.release.outputs.published == 'true' || needs.release.outputs.versionChanged == 'true'
     uses: ./.github/workflows/docker-build.yaml
     with:
       push_images: true
