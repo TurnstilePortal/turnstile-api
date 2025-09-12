@@ -40,11 +40,13 @@ async function runL1DryRun(fromBlock?: number, toBlock?: number): Promise<void> 
   console.log(`Network: ${config.name}`);
   console.log(`L1 RPC: ${config.l1.rpcUrl}`);
   console.log(`Portal Address: ${config.l1.portalAddress}`);
+  console.log(`L1 Allow List Address: ${config.l1.allowListAddress}`);
 
   const l1Collector = new L1Collector({
     rpcUrl: config.l1.rpcUrl,
     portalAddress: config.l1.portalAddress as `0x${string}`,
     inboxAddress: config.l1.inboxAddress as `0x${string}`,
+    allowListAddress: config.l1.allowListAddress as `0x${string}`,
     startBlock: config.l1.startBlock,
     chunkSize: config.l1.chunkSize,
     network: config.l1.network,

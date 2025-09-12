@@ -22,6 +22,7 @@ describe("CollectorService", () => {
 
     mockL1Collector = {
       getL1TokenRegistrations: vi.fn().mockResolvedValue([]),
+      getL1TokenAllowListEvents: vi.fn().mockResolvedValue([]),
       getBlockNumber: vi.fn().mockResolvedValue(1000),
     };
 
@@ -53,8 +54,16 @@ describe("CollectorService", () => {
 
   it("should poll for data and call collectors and db functions", async () => {
     const storeL1Spy = vi.spyOn(db, "storeL1TokenRegistrations");
+    const storeL1AllowListSpy = vi.spyOn(db, "storeL1TokenAllowListEvents");
     const storeL2Spy = vi.spyOn(db, "storeL2TokenRegistrations");
 
+    const l1AllowListEvents: NewToken[] = [
+      {
+        l1Address: "0x1234567890123456789012345678901234567890",
+        l1AllowListStatus: "PROPOSED",
+        l1AllowListProposalTx: "0xabc",
+      },
+    ];
     const l1Registrations: NewToken[] = [
       {
         symbol: "L1",
@@ -68,6 +77,7 @@ describe("CollectorService", () => {
     ];
     const l2Registrations: Partial<NewToken>[] = [{ symbol: "L2" }];
 
+    (mockL1Collector.getL1TokenAllowListEvents as ReturnType<typeof vi.fn>).mockResolvedValueOnce(l1AllowListEvents);
     (mockL1Collector.getL1TokenRegistrations as ReturnType<typeof vi.fn>).mockResolvedValueOnce(l1Registrations);
     (mockL2Collector.getL2TokenRegistrations as ReturnType<typeof vi.fn>).mockResolvedValueOnce(l2Registrations);
     (mockBlockProgress.getLastScannedBlock as ReturnType<typeof vi.fn>)
@@ -81,9 +91,11 @@ describe("CollectorService", () => {
     expect(mockBlockProgress.getLastScannedBlock).toHaveBeenCalledWith("L1");
     expect(mockBlockProgress.getLastScannedBlock).toHaveBeenCalledWith("L2");
 
+    expect(mockL1Collector.getL1TokenAllowListEvents).toHaveBeenCalled();
     expect(mockL1Collector.getL1TokenRegistrations).toHaveBeenCalled();
     expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalled();
 
+    expect(storeL1AllowListSpy).toHaveBeenCalledWith(l1AllowListEvents);
     expect(storeL1Spy).toHaveBeenCalledWith(l1Registrations);
     expect(storeL2Spy).toHaveBeenCalledWith(l2Registrations);
 
@@ -93,7 +105,7 @@ describe("CollectorService", () => {
 
   it("should handle errors during polling gracefully", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    (mockL1Collector.getL1TokenRegistrations as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+    (mockL1Collector.getL1TokenAllowListEvents as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("Test Error"),
     );
 

@@ -1,6 +1,6 @@
 import { L1Collector } from "../collectors/l1.js";
 import { L2Collector } from "../collectors/l2.js";
-import { storeL1TokenRegistrations, storeL2TokenRegistrations } from "../db.js";
+import { storeL1TokenAllowListEvents, storeL1TokenRegistrations, storeL2TokenRegistrations } from "../db.js";
 import { BlockProgressService } from "./block-progress.js";
 
 export interface CollectorServiceConfig {
@@ -106,8 +106,20 @@ export class CollectorService {
     // Process L1 if there are blocks to scan
     if (!l1CaughtUp) {
       console.log(`Scanning L1 blocks ${fromL1Block} to ${toL1Block} (current: ${currentL1Block})`);
-      const l1Registrations = await this.l1Collector.getL1TokenRegistrations(fromL1Block, toL1Block);
 
+      // Fetch both allowlist events and registrations in parallel
+      const [l1AllowListEvents, l1Registrations] = await Promise.all([
+        this.l1Collector.getL1TokenAllowListEvents(fromL1Block, toL1Block),
+        this.l1Collector.getL1TokenRegistrations(fromL1Block, toL1Block),
+      ]);
+
+      // Store allowlist events first (proposals and resolutions)
+      if (l1AllowListEvents.length > 0) {
+        console.log(`Found ${l1AllowListEvents.length} L1 token allowlist events`);
+        await storeL1TokenAllowListEvents(l1AllowListEvents);
+      }
+
+      // Then store registrations (which have more complete token data)
       if (l1Registrations.length > 0) {
         console.log(`Found ${l1Registrations.length} L1 token registrations`);
         await storeL1TokenRegistrations(l1Registrations);

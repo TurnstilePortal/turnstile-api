@@ -36,6 +36,7 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn(),
   asc: vi.fn(),
   eq: vi.fn(),
+  gt: vi.fn(),
   isNotNull: vi.fn(),
   or: vi.fn(),
 }));
@@ -62,15 +63,11 @@ const createMockDb = () => ({
     from: vi.fn((..._args: unknown[]) => ({
       where: vi.fn((..._args: unknown[]) => ({
         orderBy: vi.fn((..._args: unknown[]) => ({
-          limit: vi.fn((..._args: unknown[]) => ({
-            offset: vi.fn((..._args: unknown[]) => Promise.resolve([])),
-          })),
+          limit: vi.fn((..._args: unknown[]) => Promise.resolve([])),
         })),
       })),
       orderBy: vi.fn((..._args: unknown[]) => ({
-        limit: vi.fn((..._args: unknown[]) => ({
-          offset: vi.fn((..._args: unknown[]) => Promise.resolve([])),
-        })),
+        limit: vi.fn((..._args: unknown[]) => Promise.resolve([])),
       })),
       limit: vi.fn((..._args: unknown[]) => Promise.resolve([])),
     })),
@@ -92,14 +89,14 @@ describe("API Server", () => {
   });
 
   describe("Query Parameter Validation", () => {
-    it("should handle valid limit and offset parameters", () => {
+    it("should handle valid limit and cursor parameters", () => {
       const parseLimit = (val?: string) => {
         if (!val) return 100;
         const num = parseInt(val, 10);
         return num > 0 && num <= 1000 ? num : 100;
       };
 
-      const parseOffset = (val?: string) => {
+      const parseCursor = (val?: string) => {
         if (!val) return 0;
         const num = parseInt(val, 10);
         return num >= 0 ? num : 0;
@@ -111,10 +108,10 @@ describe("API Server", () => {
       expect(parseLimit("-1")).toBe(100); // negative
       expect(parseLimit()).toBe(100); // undefined
 
-      expect(parseOffset("10")).toBe(10);
-      expect(parseOffset("0")).toBe(0);
-      expect(parseOffset("-1")).toBe(0); // negative
-      expect(parseOffset()).toBe(0); // undefined
+      expect(parseCursor("10")).toBe(10);
+      expect(parseCursor("0")).toBe(0);
+      expect(parseCursor("-1")).toBe(0); // negative
+      expect(parseCursor()).toBe(0); // undefined
     });
 
     it("should handle invalid parameter values", () => {
@@ -124,14 +121,14 @@ describe("API Server", () => {
         return num > 0 && num <= 1000 ? num : 100;
       };
 
-      const parseOffset = (val?: string) => {
+      const parseCursor = (val?: string) => {
         if (!val) return 0;
         const num = parseInt(val, 10);
         return num >= 0 ? num : 0;
       };
 
       expect(parseLimit("invalid")).toBe(100); // NaN
-      expect(parseOffset("invalid")).toBe(0); // NaN
+      expect(parseCursor("invalid")).toBe(0); // NaN
     });
   });
 
@@ -296,9 +293,10 @@ describe("API Server", () => {
   });
 
   describe("Database Query Logic", () => {
-    it("should handle database query for tokens list", async () => {
+    it("should handle database query for tokens list with cursor pagination", async () => {
       const mockTokens = [
         {
+          id: 1,
           symbol: "ETH",
           name: "Ethereum",
           decimals: 18,
@@ -306,6 +304,7 @@ describe("API Server", () => {
           l2Address: null,
         },
         {
+          id: 2,
           symbol: "USDC",
           name: "USD Coin",
           decimals: 6,
@@ -317,16 +316,19 @@ describe("API Server", () => {
       // Setup mock to return tokens
       mockDb.select.mockReturnValue({
         from: vi.fn(() => ({
-          orderBy: vi.fn(() => ({
-            limit: vi.fn(() => ({
-              offset: vi.fn(() => Promise.resolve(mockTokens)),
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(mockTokens)),
             })),
+          })),
+          orderBy: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(mockTokens)),
           })),
         })),
       });
 
-      // Test the query flow
-      const result = await mockDb.select().from({}).orderBy({}).limit(100).offset(0);
+      // Test the query flow with cursor
+      const result = await mockDb.select().from({}).where({}).orderBy({}).limit(101);
       expect(result).toEqual(mockTokens);
     });
 
@@ -334,16 +336,35 @@ describe("API Server", () => {
       // Setup mock to throw error
       mockDb.select.mockReturnValue({
         from: vi.fn(() => ({
-          orderBy: vi.fn(() => ({
-            limit: vi.fn(() => ({
-              offset: vi.fn(() => Promise.reject(new Error("Database error"))),
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => ({
+              limit: vi.fn(() => Promise.reject(new Error("Database error"))),
             })),
           })),
         })),
       });
 
       // Test error handling
-      await expect(mockDb.select().from({}).orderBy({}).limit(100).offset(0)).rejects.toThrow("Database error");
+      await expect(mockDb.select().from({}).where({}).orderBy({}).limit(101)).rejects.toThrow("Database error");
+    });
+
+    it("should handle cursor-based pagination response", () => {
+      const mockTokens = [
+        { id: 1, symbol: "ETH", name: "Ethereum", decimals: 18 },
+        { id: 2, symbol: "USDC", name: "USD Coin", decimals: 6 },
+        { id: 3, symbol: "DAI", name: "Dai Stablecoin", decimals: 18 },
+      ];
+
+      // Simulate fetching with limit + 1
+      const limit = 2;
+      const fetchedTokens = mockTokens.slice(0, limit + 1);
+      const hasMore = fetchedTokens.length > limit;
+      const resultTokens = hasMore ? fetchedTokens.slice(0, -1) : fetchedTokens;
+      const nextCursor = resultTokens.length > 0 ? resultTokens[resultTokens.length - 1].id.toString() : null;
+
+      expect(hasMore).toBe(true);
+      expect(resultTokens).toHaveLength(2);
+      expect(nextCursor).toBe("2");
     });
   });
 });

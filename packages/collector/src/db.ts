@@ -55,6 +55,50 @@ export async function storeL1TokenRegistrations(registrations: NewToken[]): Prom
   console.log(`Stored ${registrations.length} L1 token registrations.`);
 }
 
+export async function storeL1TokenAllowListEvents(allowListEvents: NewToken[]): Promise<void> {
+  if (allowListEvents.length === 0) return;
+  const db = getDatabase();
+
+  for (const event of allowListEvents) {
+    if (!event.l1Address) {
+      console.warn("Skipping allowlist event with no L1 address", event);
+      continue;
+    }
+
+    // Use upsert to handle both new tokens and updates to existing tokens
+    // Only update the allowlist-related fields, preserving any existing registration data
+    await db
+      .insert(tokens)
+      .values({
+        l1Address: event.l1Address,
+        l1AllowListStatus: event.l1AllowListStatus,
+        l1AllowListProposalTx: event.l1AllowListProposalTx,
+        l1AllowListResolutionTx: event.l1AllowListResolutionTx,
+        // Set nulls for fields we don't have from allowlist events
+        symbol: null,
+        name: null,
+        decimals: null,
+        l1RegistrationBlock: null,
+        l1RegistrationTx: null,
+        l2Address: null,
+        l2RegistrationBlock: null,
+        l2RegistrationTxIndex: null,
+        l2RegistrationLogIndex: null,
+      })
+      .onConflictDoUpdate({
+        target: tokens.l1Address,
+        set: {
+          // Only update allowlist fields, preserve existing data
+          l1AllowListStatus: event.l1AllowListStatus,
+          l1AllowListProposalTx: event.l1AllowListProposalTx ?? tokens.l1AllowListProposalTx,
+          l1AllowListResolutionTx: event.l1AllowListResolutionTx ?? tokens.l1AllowListResolutionTx,
+          updatedAt: new Date(),
+        },
+      });
+  }
+  console.log(`Stored ${allowListEvents.length} L1 token allowlist events.`);
+}
+
 export async function storeL2TokenRegistrations(registrations: Partial<NewToken>[]): Promise<void> {
   if (registrations.length === 0) return;
   const db = getDatabase();

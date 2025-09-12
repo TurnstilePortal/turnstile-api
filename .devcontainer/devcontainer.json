@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/base:debian",
   "mounts": [
     {
-      "target": "${containerWorkspaceFolder}/collector/node_modules",
+      "target": "${containerWorkspaceFolder}/node_modules",
       "type": "volume"
     },
     {

@@ -1,3 +1,4 @@
+CREATE TYPE "public"."l1_allow_list_status" AS ENUM('UNKNOWN', 'PROPOSED', 'ACCEPTED', 'REJECTED');--> statement-breakpoint
 CREATE TABLE "block_progress" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"chain" varchar(10) NOT NULL,
@@ -15,6 +16,9 @@ CREATE TABLE "tokens" (
 	"decimals" smallint,
 	"l1_address" char(42),
 	"l2_address" char(66),
+	"l1_allow_list_status" "l1_allow_list_status",
+	"l1_allow_list_proposal_tx" varchar(66),
+	"l1_allow_list_resolution_tx" varchar(66),
 	"l1_registration_block" bigint,
 	"l2_registration_block" bigint,
 	"l1_registration_tx" varchar(66),

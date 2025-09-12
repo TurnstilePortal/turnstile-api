@@ -14,7 +14,7 @@ export function normalizeL2Address(address: string): string {
   return address.toLowerCase();
 }
 
-export function isL2Address(address: string): boolean {
+export function isL2Address(address: string): address is `0x${string}` {
   return address.startsWith("0x") && address.length === 66;
 }
 
