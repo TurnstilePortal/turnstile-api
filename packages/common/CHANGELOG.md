@@ -1,5 +1,11 @@
 # @turnstile-portal/api-common
 
+## 0.0.3
+
+### Patch Changes
+
+- 288a536: add `start` script that runs migrations to package.json for consistency with other packages
+
 ## 0.0.2
 
 ### Patch Changes
