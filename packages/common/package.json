@@ -10,6 +10,7 @@
     "dev": "tsc --watch",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
+    "start": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
     "test": "vitest --run",
     "coverage": "vitest --run --coverage",
