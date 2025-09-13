@@ -1,5 +1,11 @@
 # @turnstile-portal/collector
 
+## 0.0.9
+
+### Patch Changes
+
+- @turnstile-portal/api-common@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes
