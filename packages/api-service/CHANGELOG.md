@@ -1,5 +1,11 @@
 # @turnstile-portal/api-service
 
+## 0.0.5
+
+### Patch Changes
+
+- @turnstile-portal/api-common@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes
