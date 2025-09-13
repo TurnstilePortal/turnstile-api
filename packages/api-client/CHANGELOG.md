@@ -1,5 +1,11 @@
 # @turnstile-portal/api-client
 
+## 0.0.8
+
+### Patch Changes
+
+- 749a525: fix exports
+
 ## 0.0.7
 
 ### Patch Changes
