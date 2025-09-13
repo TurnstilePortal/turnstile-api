@@ -6,13 +6,13 @@ export type {
   ReadyResponse,
   Token,
   TokensResponse,
-} from "./client";
+} from "./client.js";
 export {
   createMainnetClient,
   createSandboxClient,
   createTestnetClient,
   TurnstileApiClient,
-} from "./client";
-export * from "./constants";
+} from "./client.js";
+export * from "./constants.js";
 // Re-export generated types for advanced use cases
-export type { components, paths } from "./types";
+export type { components, paths } from "./types.js";

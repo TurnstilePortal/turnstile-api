@@ -1,5 +1,5 @@
-import { MAINNET_BASE_URL, SANDBOX_BASE_URL, TESTNET_BASE_URL } from "./constants";
-import type { paths } from "./types";
+import { MAINNET_BASE_URL, SANDBOX_BASE_URL, TESTNET_BASE_URL } from "./constants.js";
+import type { paths } from "./types.js";
 
 export type TokensResponse = paths["/tokens"]["get"]["responses"]["200"]["content"]["application/json"];
 export type Token = paths["/tokens/{address}"]["get"]["responses"]["200"]["content"]["application/json"];

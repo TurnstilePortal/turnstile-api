@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { TurnstileApiClient } from "./client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { TurnstileApiClient } from "./client.js";
 
 describe("TurnstileApiClient", () => {
   const mockFetch = vi.fn();
