@@ -1,12 +1,16 @@
 import type { FastifyInstance } from "fastify";
-import { z } from "zod";
+import {
+  errorResponseSchema,
+  paginatedTokenResponseSchema,
+  paginationParamsJsonSchema,
+  paginationParamsSchema,
+  tokenAddressParamsSchema,
+  tokenSchema,
+  zodToJsonSchema,
+} from "../schemas";
 import { convertDbTokenToApi, isTokenComplete, type TokenService } from "../services/token-service";
-import { createPaginatedResponse, paginationSchema } from "../utils/pagination";
+import { createPaginatedResponse } from "../utils/pagination";
 import { CacheControl, normalizeAddress, sendError, sendJsonResponse } from "../utils/response";
-
-const tokenAddressSchema = z.object({
-  address: z.string(),
-});
 
 export async function registerTokenRoutes(fastify: FastifyInstance, tokenService: TokenService) {
   fastify.get<{
@@ -15,17 +19,18 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens",
     {
       schema: {
-        querystring: {
-          type: "object",
-          properties: {
-            limit: { type: "string" },
-            cursor: { type: "string" },
-          },
+        tags: ["Tokens"],
+        summary: "List all tokens",
+        description: "Get a paginated list of all tokens",
+        querystring: zodToJsonSchema(paginationParamsJsonSchema),
+        response: {
+          200: zodToJsonSchema(paginatedTokenResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
     async (request, reply) => {
-      const { limit, cursor } = paginationSchema.parse(request.query);
+      const { limit, cursor } = paginationParamsSchema.parse(request.query);
 
       try {
         const dbTokens = await tokenService.getTokens(cursor, limit);
@@ -46,17 +51,20 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens/:address",
     {
       schema: {
-        params: {
-          type: "object",
-          properties: {
-            address: { type: "string" },
-          },
-          required: ["address"],
+        tags: ["Tokens"],
+        summary: "Get token by address",
+        description: "Get a token by its L1 or L2 address",
+        params: zodToJsonSchema(tokenAddressParamsSchema),
+        response: {
+          200: zodToJsonSchema(tokenSchema),
+          400: zodToJsonSchema(errorResponseSchema),
+          404: zodToJsonSchema(errorResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
     async (request, reply) => {
-      const { address } = tokenAddressSchema.parse(request.params);
+      const { address } = tokenAddressParamsSchema.parse(request.params);
 
       try {
         const normalized = normalizeAddress(address);
@@ -87,17 +95,18 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens/proposed",
     {
       schema: {
-        querystring: {
-          type: "object",
-          properties: {
-            limit: { type: "string" },
-            cursor: { type: "string" },
-          },
+        tags: ["Tokens"],
+        summary: "List proposed tokens",
+        description: "Get a paginated list of tokens with PROPOSED status",
+        querystring: zodToJsonSchema(paginationParamsJsonSchema),
+        response: {
+          200: zodToJsonSchema(paginatedTokenResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
     async (request, reply) => {
-      const { limit, cursor } = paginationSchema.parse(request.query);
+      const { limit, cursor } = paginationParamsSchema.parse(request.query);
 
       try {
         const dbTokens = await tokenService.getProposedTokens(cursor, limit);
@@ -118,17 +127,18 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens/rejected",
     {
       schema: {
-        querystring: {
-          type: "object",
-          properties: {
-            limit: { type: "string" },
-            cursor: { type: "string" },
-          },
+        tags: ["Tokens"],
+        summary: "List rejected tokens",
+        description: "Get a paginated list of tokens with REJECTED status",
+        querystring: zodToJsonSchema(paginationParamsJsonSchema),
+        response: {
+          200: zodToJsonSchema(paginatedTokenResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
     async (request, reply) => {
-      const { limit, cursor } = paginationSchema.parse(request.query);
+      const { limit, cursor } = paginationParamsSchema.parse(request.query);
 
       try {
         const dbTokens = await tokenService.getRejectedTokens(cursor, limit);
@@ -149,17 +159,18 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens/accepted",
     {
       schema: {
-        querystring: {
-          type: "object",
-          properties: {
-            limit: { type: "string" },
-            cursor: { type: "string" },
-          },
+        tags: ["Tokens"],
+        summary: "List accepted tokens",
+        description: "Get a paginated list of tokens with ACCEPTED status that are not yet fully bridged",
+        querystring: zodToJsonSchema(paginationParamsJsonSchema),
+        response: {
+          200: zodToJsonSchema(paginatedTokenResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
     async (request, reply) => {
-      const { limit, cursor } = paginationSchema.parse(request.query);
+      const { limit, cursor } = paginationParamsSchema.parse(request.query);
 
       try {
         const dbTokens = await tokenService.getAcceptedTokens(cursor, limit);
@@ -180,12 +191,14 @@ export async function registerTokenRoutes(fastify: FastifyInstance, tokenService
     "/tokens/bridged",
     {
       schema: {
-        querystring: {
-          type: "object",
-          properties: {
-            limit: { type: "string" },
-            cursor: { type: "string" },
-          },
+        tags: ["Tokens"],
+        summary: "List bridged tokens",
+        description: "Get a paginated list of fully bridged tokens (with both L1 and L2 addresses)",
+        querystring: zodToJsonSchema(paginationParamsJsonSchema),
+        response: {
+          200: zodToJsonSchema(paginatedTokenResponseSchema),
+          400: zodToJsonSchema(errorResponseSchema),
+          500: zodToJsonSchema(errorResponseSchema),
         },
       },
     },
