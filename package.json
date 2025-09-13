@@ -1,6 +1,7 @@
 {
   "name": "turnstile-api",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "build": "pnpm -r build",
     "test": "vitest --run",
@@ -11,12 +12,12 @@
     "format": "biome format --fix",
     "check": "biome check --fix",
     "version": "changeset version && pnpm install --no-frozen-lockfile",
-    "publish-packages": "echo skipping npm publish"
+    "publish-packages": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@changesets/cli": "^2.29.7",
-    "@types/node": "^24.3.1",
+    "@types/node": "^24.3.3",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "tsx": "^4.20.5",
