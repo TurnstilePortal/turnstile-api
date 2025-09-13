@@ -2,14 +2,6 @@
 
 Type-safe API client for Turnstile API, generated from OpenAPI specification.
 
-## Features
-
-- 🚀 **Zero runtime dependencies** - Only uses native fetch API
-- 📝 **Fully typed** - Generated from OpenAPI schema
-- 🔄 **Auto-pagination** - Helper methods for fetching all pages
-- 🎯 **Simple API** - Clean, intuitive interface
-- 🌐 **Universal** - Works in Node.js 18+ and modern browsers
-
 ## Installation
 
 ```bash
@@ -30,6 +22,9 @@ import { TurnstileApiClient } from '@turnstile-portal/api-client';
 const client = new TurnstileApiClient({
   baseUrl: 'https://api.turnstile.xyz',
 });
+// or use predefined base URLs / helpers:
+// const client = createSandboxClient();
+// const client = new TurnstileApiClient({ baseUrl: SANDBOX_BASE_URL });
 
 // Check service health
 const health = await client.getHealth();

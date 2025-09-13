@@ -1,3 +1,4 @@
+import { MAINNET_BASE_URL, SANDBOX_BASE_URL, TESTNET_BASE_URL } from "./constants";
 import type { paths } from "./types";
 
 export type TokensResponse = paths["/tokens"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -15,6 +16,18 @@ export interface ClientConfig {
 export interface PaginationParams {
   limit?: number;
   cursor?: number;
+}
+
+export function createSandboxClient(config?: Omit<ClientConfig, "baseUrl">) {
+  return new TurnstileApiClient({ baseUrl: SANDBOX_BASE_URL, ...config });
+}
+
+export function createTestnetClient(config?: Omit<ClientConfig, "baseUrl">) {
+  return new TurnstileApiClient({ baseUrl: TESTNET_BASE_URL, ...config });
+}
+
+export function createMainnetClient(config?: Omit<ClientConfig, "baseUrl">) {
+  return new TurnstileApiClient({ baseUrl: MAINNET_BASE_URL, ...config });
 }
 
 export class TurnstileApiClient {
