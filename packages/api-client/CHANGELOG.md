@@ -1,5 +1,11 @@
 # @turnstile-portal/api-client
 
+## 0.0.9
+
+### Patch Changes
+
+- 62f74a3: esm only build
+
 ## 0.0.8
 
 ### Patch Changes
