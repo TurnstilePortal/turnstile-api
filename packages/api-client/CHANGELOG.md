@@ -1,5 +1,11 @@
 # @turnstile-portal/api-client
 
+## 0.0.11
+
+### Patch Changes
+
+- 17b67a4: add optional startCursor parameter to the api-client getAll methods to enable incremental fetches
+
 ## 0.0.10
 
 ### Patch Changes
