@@ -1,5 +1,13 @@
 # @turnstile-portal/api-service
 
+## 0.0.10
+
+### Patch Changes
+
+- 6b628c4: - configurable api route prefix for api service
+  - return additional collected fields
+  - @turnstile-portal/api-common@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes
