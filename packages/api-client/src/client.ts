@@ -132,8 +132,9 @@ export class TurnstileApiClient {
   async *getAllPages<T extends TokensResponse>(
     fetcher: (params: PaginationParams) => Promise<T>,
     limit = 100,
+    startCursor?: number,
   ): AsyncGenerator<T["data"][number], void, unknown> {
-    let cursor = 0;
+    let cursor = startCursor ?? 0;
     let hasMore = true;
 
     while (hasMore) {
@@ -154,10 +155,12 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all tokens (auto-paginated)
+   * @param limit - Number of items per page (default: 100)
+   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
    */
-  async getAllTokens(limit = 100): Promise<Token[]> {
+  async getAllTokens(limit = 100, startCursor?: number): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getTokens(params), limit)) {
+    for await (const token of this.getAllPages((params) => this.getTokens(params), limit, startCursor)) {
       tokens.push(token);
     }
     return tokens;
@@ -165,10 +168,12 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all bridged tokens (auto-paginated)
+   * @param limit - Number of items per page (default: 100)
+   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
    */
-  async getAllBridgedTokens(limit = 100): Promise<Token[]> {
+  async getAllBridgedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getBridgedTokens(params), limit)) {
+    for await (const token of this.getAllPages((params) => this.getBridgedTokens(params), limit, startCursor)) {
       tokens.push(token);
     }
     return tokens;
@@ -176,10 +181,12 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all proposed tokens (auto-paginated)
+   * @param limit - Number of items per page (default: 100)
+   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
    */
-  async getAllProposedTokens(limit = 100): Promise<Token[]> {
+  async getAllProposedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getProposedTokens(params), limit)) {
+    for await (const token of this.getAllPages((params) => this.getProposedTokens(params), limit, startCursor)) {
       tokens.push(token);
     }
     return tokens;
@@ -187,10 +194,12 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all accepted tokens (auto-paginated)
+   * @param limit - Number of items per page (default: 100)
+   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
    */
-  async getAllAcceptedTokens(limit = 100): Promise<Token[]> {
+  async getAllAcceptedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getAcceptedTokens(params), limit)) {
+    for await (const token of this.getAllPages((params) => this.getAcceptedTokens(params), limit, startCursor)) {
       tokens.push(token);
     }
     return tokens;
@@ -198,10 +207,12 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all rejected tokens (auto-paginated)
+   * @param limit - Number of items per page (default: 100)
+   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
    */
-  async getAllRejectedTokens(limit = 100): Promise<Token[]> {
+  async getAllRejectedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getRejectedTokens(params), limit)) {
+    for await (const token of this.getAllPages((params) => this.getRejectedTokens(params), limit, startCursor)) {
       tokens.push(token);
     }
     return tokens;

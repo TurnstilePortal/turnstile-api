@@ -164,5 +164,57 @@ describe("TurnstileApiClient", () => {
       expect(tokens[0].symbol).toBe("TOKEN1");
       expect(tokens[1].symbol).toBe("TOKEN2");
     });
+
+    it("should start from specified cursor when provided", async () => {
+      const page1 = {
+        data: [{ id: 5, symbol: "TOKEN5", name: "Token 5", decimals: 18 }],
+        pagination: { limit: 1, hasMore: true, nextCursor: 6 },
+      };
+
+      const page2 = {
+        data: [{ id: 6, symbol: "TOKEN6", name: "Token 6", decimals: 18 }],
+        pagination: { limit: 1, hasMore: false },
+      };
+
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => page1 })
+        .mockResolvedValueOnce({ ok: true, json: async () => page2 });
+
+      const tokens = await client.getAllTokens(1, 5);
+
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].symbol).toBe("TOKEN5");
+      expect(tokens[1].symbol).toBe("TOKEN6");
+      expect(mockFetch).toHaveBeenCalledWith("http://localhost:8080/tokens?limit=1&cursor=5", expect.any(Object));
+    });
+  });
+
+  describe("getAllPages with startCursor", () => {
+    it("should start fetching from the specified cursor", async () => {
+      const page1 = {
+        data: [{ id: 10, symbol: "TOKEN10", name: "Token 10", decimals: 18 }],
+        pagination: { limit: 1, hasMore: true, nextCursor: 11 },
+      };
+
+      const page2 = {
+        data: [{ id: 11, symbol: "TOKEN11", name: "Token 11", decimals: 18 }],
+        pagination: { limit: 1, hasMore: false },
+      };
+
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => page1 })
+        .mockResolvedValueOnce({ ok: true, json: async () => page2 });
+
+      const tokens = [];
+      for await (const token of client.getAllPages((params) => client.getTokens(params), 1, 10)) {
+        tokens.push(token);
+      }
+
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].id).toBe(10);
+      expect(tokens[1].id).toBe(11);
+      expect(mockFetch).toHaveBeenNthCalledWith(1, "http://localhost:8080/tokens?limit=1&cursor=10", expect.any(Object));
+      expect(mockFetch).toHaveBeenNthCalledWith(2, "http://localhost:8080/tokens?limit=1&cursor=11", expect.any(Object));
+    });
   });
 });
