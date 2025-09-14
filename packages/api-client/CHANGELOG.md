@@ -1,5 +1,11 @@
 # @turnstile-portal/api-client
 
+## 0.0.10
+
+### Patch Changes
+
+- 6b628c4: add more getAll helper methods
+
 ## 0.0.9
 
 ### Patch Changes

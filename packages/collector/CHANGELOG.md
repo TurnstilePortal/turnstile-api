@@ -1,5 +1,13 @@
 # @turnstile-portal/collector
 
+## 0.0.10
+
+### Patch Changes
+
+- 6b628c4: - collect more token registration data
+  - refactor & simplify token metadata collection
+  - @turnstile-portal/api-common@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes
