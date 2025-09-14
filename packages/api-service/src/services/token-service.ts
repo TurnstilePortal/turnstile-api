@@ -10,7 +10,19 @@ export interface Token {
   l2_address?: string;
   l1_allow_list_status?: string | null;
   l1_allow_list_proposal_tx?: string | null;
+  l1_allow_list_proposer?: string | null;
+  l1_allow_list_approver?: string | null;
   l1_allow_list_resolution_tx?: string | null;
+  l1_registration_submitter?: string | null;
+  l1_registration_block?: number | null;
+  l2_registration_available_block?: number | null;
+  l2_registration_block?: number | null;
+  l2_registration_submitter?: string | null;
+  l2_registration_fee_payer?: string | null;
+  l1_registration_tx?: string | null;
+  l2_registration_tx?: string | null;
+  l2_registration_tx_index?: number | null;
+  l2_registration_log_index?: number | null;
 }
 
 export function convertDbTokenToApi(dbToken: typeof tokens.$inferSelect, includeId = false): Token {
@@ -40,8 +52,56 @@ export function convertDbTokenToApi(dbToken: typeof tokens.$inferSelect, include
     token.l1_allow_list_proposal_tx = dbToken.l1AllowListProposalTx;
   }
 
+  if (dbToken.l1AllowListProposer) {
+    token.l1_allow_list_proposer = dbToken.l1AllowListProposer;
+  }
+
+  if (dbToken.l1AllowListApprover) {
+    token.l1_allow_list_approver = dbToken.l1AllowListApprover;
+  }
+
   if (dbToken.l1AllowListResolutionTx) {
     token.l1_allow_list_resolution_tx = dbToken.l1AllowListResolutionTx;
+  }
+
+  if (dbToken.l1RegistrationSubmitter) {
+    token.l1_registration_submitter = dbToken.l1RegistrationSubmitter;
+  }
+
+  if (dbToken.l1RegistrationBlock) {
+    token.l1_registration_block = dbToken.l1RegistrationBlock;
+  }
+
+  if (dbToken.l2RegistrationAvailableBlock) {
+    token.l2_registration_available_block = dbToken.l2RegistrationAvailableBlock;
+  }
+
+  if (dbToken.l2RegistrationBlock) {
+    token.l2_registration_block = dbToken.l2RegistrationBlock;
+  }
+
+  if (dbToken.l2RegistrationSubmitter) {
+    token.l2_registration_submitter = dbToken.l2RegistrationSubmitter;
+  }
+
+  if (dbToken.l2RegistrationFeePayer) {
+    token.l2_registration_fee_payer = dbToken.l2RegistrationFeePayer;
+  }
+
+  if (dbToken.l1RegistrationTx) {
+    token.l1_registration_tx = dbToken.l1RegistrationTx;
+  }
+
+  if (dbToken.l2RegistrationTx) {
+    token.l2_registration_tx = dbToken.l2RegistrationTx;
+  }
+
+  if (dbToken.l2RegistrationTxIndex) {
+    token.l2_registration_tx_index = dbToken.l2RegistrationTxIndex;
+  }
+
+  if (dbToken.l2RegistrationLogIndex) {
+    token.l2_registration_log_index = dbToken.l2RegistrationLogIndex;
   }
 
   return token;

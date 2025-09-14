@@ -3,8 +3,6 @@ import type { paths } from "./types.js";
 
 export type TokensResponse = paths["/tokens"]["get"]["responses"]["200"]["content"]["application/json"];
 export type Token = paths["/tokens/{address}"]["get"]["responses"]["200"]["content"]["application/json"];
-export type HealthResponse = paths["/health"]["get"]["responses"]["200"]["content"]["application/json"];
-export type ReadyResponse = paths["/ready"]["get"]["responses"]["200"]["content"]["application/json"];
 export type ErrorResponse = { error: string };
 
 export interface ClientConfig {
@@ -79,20 +77,6 @@ export class TurnstileApiClient {
     }
     const queryString = searchParams.toString();
     return queryString ? `?${queryString}` : "";
-  }
-
-  /**
-   * Check if the service is healthy
-   */
-  async getHealth(): Promise<HealthResponse> {
-    return this.request<HealthResponse>("/health");
-  }
-
-  /**
-   * Check if the service is ready (including database connectivity)
-   */
-  async getReady(): Promise<ReadyResponse> {
-    return this.request<ReadyResponse>("/ready");
   }
 
   /**
@@ -185,6 +169,39 @@ export class TurnstileApiClient {
   async getAllBridgedTokens(limit = 100): Promise<Token[]> {
     const tokens: Token[] = [];
     for await (const token of this.getAllPages((params) => this.getBridgedTokens(params), limit)) {
+      tokens.push(token);
+    }
+    return tokens;
+  }
+
+  /**
+   * Fetch all proposed tokens (auto-paginated)
+   */
+  async getAllProposedTokens(limit = 100): Promise<Token[]> {
+    const tokens: Token[] = [];
+    for await (const token of this.getAllPages((params) => this.getProposedTokens(params), limit)) {
+      tokens.push(token);
+    }
+    return tokens;
+  }
+
+  /**
+   * Fetch all accepted tokens (auto-paginated)
+   */
+  async getAllAcceptedTokens(limit = 100): Promise<Token[]> {
+    const tokens: Token[] = [];
+    for await (const token of this.getAllPages((params) => this.getAcceptedTokens(params), limit)) {
+      tokens.push(token);
+    }
+    return tokens;
+  }
+
+  /**
+   * Fetch all rejected tokens (auto-paginated)
+   */
+  async getAllRejectedTokens(limit = 100): Promise<Token[]> {
+    const tokens: Token[] = [];
+    for await (const token of this.getAllPages((params) => this.getRejectedTokens(params), limit)) {
       tokens.push(token);
     }
     return tokens;

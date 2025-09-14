@@ -1,8 +1,10 @@
 import { InboxAbi } from "@aztec/l1-artifacts/InboxAbi";
 import type { NewToken } from "@turnstile-portal/api-common/schema";
 import { IAllowListABI, ITokenPortalABI } from "@turnstile-portal/l1-artifacts-abi";
-import { createPublicClient, erc20Abi, getAbiItem, http, type PublicClient } from "viem";
+import { createPublicClient, getAbiItem, http, type PublicClient } from "viem";
 import { anvil, mainnet, sepolia } from "viem/chains";
+import { getDatabase } from "../db.js";
+import { MetadataService } from "../services/metadata.js";
 import { normalizeL1Address } from "../utils/address.js";
 import { allowListStatusNumberToString } from "../utils/l1.js";
 
@@ -39,6 +41,7 @@ export interface L1CollectorConfig {
 export class L1Collector {
   private publicClient: PublicClient;
   private config: Required<L1CollectorConfig>;
+  private metadataService: MetadataService;
 
   constructor(config: L1CollectorConfig) {
     this.config = {
@@ -52,6 +55,8 @@ export class L1Collector {
       chain,
       transport: http(this.config.rpcUrl),
     });
+
+    this.metadataService = new MetadataService(this.publicClient, getDatabase());
   }
 
   async getL1TokenAllowListEvents(fromBlock: number, toBlock: number): Promise<NewToken[]> {
@@ -74,19 +79,29 @@ export class L1Collector {
         continue;
       }
 
-      const l1AllowListStatus = allowListStatusNumberToString(log.args.status);
-      let resolution = false;
+      const statusStr = allowListStatusNumberToString(Number(log.args.status));
+      const isResolution = statusStr === "ACCEPTED" || statusStr === "REJECTED";
 
-      if (l1AllowListStatus === "ACCEPTED" || l1AllowListStatus === "REJECTED") {
-        resolution = true;
-      }
+      const l1Address = normalizeL1Address(log.args.addr);
+      await this.metadataService.ensureTokenMetadata(l1Address);
 
-      allowListTokens.push({
-        l1AllowListStatus: allowListStatusNumberToString(log.args.status ?? 0),
-        l1AllowListProposalTx: resolution ? undefined : log.transactionHash,
-        l1AllowListResolutionTx: resolution ? log.transactionHash : undefined,
-        l1Address: normalizeL1Address(log.args.addr),
-      });
+      const proposer = !isResolution
+        ? await this.publicClient.getTransactionReceipt({ hash: log.transactionHash }).then((r) => r.from)
+        : undefined;
+      const approver = isResolution
+        ? await this.publicClient.getTransactionReceipt({ hash: log.transactionHash }).then((r) => r.from)
+        : undefined;
+
+      const token: NewToken = {
+        l1AllowListStatus: statusStr,
+        l1AllowListProposalTx: isResolution ? undefined : log.transactionHash,
+        l1AllowListProposer: proposer,
+        l1AllowListResolutionTx: isResolution ? log.transactionHash : undefined,
+        l1AllowListApprover: approver,
+        l1Address,
+      };
+
+      allowListTokens.push(token);
     }
 
     return allowListTokens;
@@ -131,33 +146,20 @@ export class L1Collector {
       }
 
       const tokenAddress = portalLog.args.token;
-      const [name, symbol, decimals] = await Promise.all([
-        this.publicClient.readContract({
-          address: tokenAddress,
-          abi: erc20Abi,
-          functionName: "name",
-        }),
-        this.publicClient.readContract({
-          address: tokenAddress,
-          abi: erc20Abi,
-          functionName: "symbol",
-        }),
-        this.publicClient.readContract({
-          address: tokenAddress,
-          abi: erc20Abi,
-          functionName: "decimals",
-        }),
-      ]);
+      const l1Address = normalizeL1Address(tokenAddress);
+      await this.metadataService.ensureTokenMetadata(l1Address);
 
-      registrations.push({
-        symbol,
-        name,
-        decimals: Number(decimals),
-        l1Address: normalizeL1Address(tokenAddress),
+      const reg: NewToken = {
+        l1Address,
         l1RegistrationBlock: Number(portalLog.blockNumber),
         l1RegistrationTx: portalLog.transactionHash,
-        l2RegistrationBlock: Number(correlatedInboxLog.args.l2BlockNumber),
-      });
+        l1RegistrationSubmitter: await this.publicClient
+          .getTransactionReceipt({ hash: portalLog.transactionHash })
+          .then((r) => r.from),
+        l2RegistrationAvailableBlock: Number(correlatedInboxLog.args.l2BlockNumber),
+      };
+
+      registrations.push(reg);
     }
 
     return registrations;

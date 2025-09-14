@@ -1,6 +1,7 @@
 import { createDbClient, type DbClient } from "@turnstile-portal/api-common";
 import type { NewToken } from "@turnstile-portal/api-common/schema";
 import { tokens } from "@turnstile-portal/api-common/schema";
+import { eq } from "drizzle-orm";
 
 // Export DbClient type for other modules to use
 export type { DbClient };
@@ -36,21 +37,39 @@ export function setDatabase(database: DbClient | null): void {
   db = database;
 }
 
+export async function getTokenMetadataByL1Address(
+  l1Address: string,
+): Promise<{ symbol: string | null; name: string | null; decimals: number | null } | null> {
+  const db = getDatabase();
+  const result = await db
+    .select({
+      symbol: tokens.symbol,
+      name: tokens.name,
+      decimals: tokens.decimals,
+    })
+    .from(tokens)
+    .where(eq(tokens.l1Address, l1Address))
+    .limit(1);
+
+  return result[0] ?? null;
+}
+
 export async function storeL1TokenRegistrations(registrations: NewToken[]): Promise<void> {
   if (registrations.length === 0) return;
   const db = getDatabase();
 
   for (const registration of registrations) {
+    // MetadataService ensures token exists with metadata, so we just update registration fields
     await db
-      .insert(tokens)
-      .values(registration)
-      .onConflictDoUpdate({
-        target: tokens.l1Address,
-        set: {
-          ...registration,
-          updatedAt: new Date(),
-        },
-      });
+      .update(tokens)
+      .set({
+        l1RegistrationBlock: registration.l1RegistrationBlock,
+        l1RegistrationTx: registration.l1RegistrationTx,
+        l1RegistrationSubmitter: registration.l1RegistrationSubmitter,
+        l2RegistrationAvailableBlock: registration.l2RegistrationAvailableBlock,
+        updatedAt: new Date(),
+      })
+      .where(eq(tokens.l1Address, registration.l1Address as string));
   }
   console.log(`Stored ${registrations.length} L1 token registrations.`);
 }
@@ -65,36 +84,18 @@ export async function storeL1TokenAllowListEvents(allowListEvents: NewToken[]): 
       continue;
     }
 
-    // Use upsert to handle both new tokens and updates to existing tokens
-    // Only update the allowlist-related fields, preserving any existing registration data
+    // MetadataService ensures token exists with metadata, so we just update allowlist fields
     await db
-      .insert(tokens)
-      .values({
-        l1Address: event.l1Address,
+      .update(tokens)
+      .set({
         l1AllowListStatus: event.l1AllowListStatus,
         l1AllowListProposalTx: event.l1AllowListProposalTx,
+        l1AllowListProposer: event.l1AllowListProposer,
         l1AllowListResolutionTx: event.l1AllowListResolutionTx,
-        // Set nulls for fields we don't have from allowlist events
-        symbol: null,
-        name: null,
-        decimals: null,
-        l1RegistrationBlock: null,
-        l1RegistrationTx: null,
-        l2Address: null,
-        l2RegistrationBlock: null,
-        l2RegistrationTxIndex: null,
-        l2RegistrationLogIndex: null,
+        l1AllowListApprover: event.l1AllowListApprover,
+        updatedAt: new Date(),
       })
-      .onConflictDoUpdate({
-        target: tokens.l1Address,
-        set: {
-          // Only update allowlist fields, preserve existing data
-          l1AllowListStatus: event.l1AllowListStatus,
-          l1AllowListProposalTx: event.l1AllowListProposalTx ?? tokens.l1AllowListProposalTx,
-          l1AllowListResolutionTx: event.l1AllowListResolutionTx ?? tokens.l1AllowListResolutionTx,
-          updatedAt: new Date(),
-        },
-      });
+      .where(eq(tokens.l1Address, event.l1Address));
   }
   console.log(`Stored ${allowListEvents.length} L1 token allowlist events.`);
 }
@@ -108,32 +109,20 @@ export async function storeL2TokenRegistrations(registrations: Partial<NewToken>
       console.warn("Skipping L2 registration with no L1 address", registration);
       continue;
     }
-    // Use upsert to handle both new tokens (L2 found before L1) and updates (L1 already exists)
+    // MetadataService ensures token exists with metadata, so we just update L2 registration fields
     await db
-      .insert(tokens)
-      .values({
-        l1Address: registration.l1Address,
+      .update(tokens)
+      .set({
         l2Address: registration.l2Address,
         l2RegistrationBlock: registration.l2RegistrationBlock,
         l2RegistrationTxIndex: registration.l2RegistrationTxIndex,
         l2RegistrationLogIndex: registration.l2RegistrationLogIndex,
-        // These fields will be null when L2 is found before L1
-        symbol: null,
-        name: null,
-        decimals: null,
-        l1RegistrationBlock: null,
-        l1RegistrationTx: null,
+        l2RegistrationTx: registration.l2RegistrationTx,
+        l2RegistrationFeePayer: registration.l2RegistrationFeePayer,
+        l2RegistrationSubmitter: registration.l2RegistrationSubmitter,
+        updatedAt: new Date(),
       })
-      .onConflictDoUpdate({
-        target: tokens.l1Address,
-        set: {
-          l2Address: registration.l2Address,
-          l2RegistrationBlock: registration.l2RegistrationBlock,
-          l2RegistrationTxIndex: registration.l2RegistrationTxIndex,
-          l2RegistrationLogIndex: registration.l2RegistrationLogIndex,
-          updatedAt: new Date(),
-        },
-      });
+      .where(eq(tokens.l1Address, registration.l1Address));
   }
   console.log(`Stored ${registrations.length} L2 token registrations.`);
 }

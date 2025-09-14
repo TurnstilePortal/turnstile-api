@@ -1,9 +1,7 @@
 export type {
   ClientConfig,
   ErrorResponse,
-  HealthResponse,
   PaginationParams,
-  ReadyResponse,
   Token,
   TokensResponse,
 } from "./client.js";

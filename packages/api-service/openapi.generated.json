@@ -87,10 +87,65 @@
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
                           },
+                          "l1_allow_list_proposer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_allow_list_approver": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
                           "l1_allow_list_resolution_tx": {
                             "nullable": true,
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_available_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_fee_payer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx_index": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_log_index": {
+                            "nullable": true,
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -217,10 +272,65 @@
                       "type": "string",
                       "pattern": "^0x[a-fA-F0-9]{64}$"
                     },
+                    "l1_allow_list_proposer": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$"
+                    },
+                    "l1_allow_list_approver": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$"
+                    },
                     "l1_allow_list_resolution_tx": {
                       "nullable": true,
                       "type": "string",
                       "pattern": "^0x[a-fA-F0-9]{64}$"
+                    },
+                    "l1_registration_submitter": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$"
+                    },
+                    "l1_registration_block": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "l2_registration_available_block": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "l2_registration_block": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "l2_registration_submitter": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{64}$"
+                    },
+                    "l2_registration_fee_payer": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{64}$"
+                    },
+                    "l1_registration_tx": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{64}$"
+                    },
+                    "l2_registration_tx": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{64}$"
+                    },
+                    "l2_registration_tx_index": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "l2_registration_log_index": {
+                      "nullable": true,
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -370,10 +480,65 @@
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
                           },
+                          "l1_allow_list_proposer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_allow_list_approver": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
                           "l1_allow_list_resolution_tx": {
                             "nullable": true,
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_available_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_fee_payer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx_index": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_log_index": {
+                            "nullable": true,
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -515,10 +680,65 @@
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
                           },
+                          "l1_allow_list_proposer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_allow_list_approver": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
                           "l1_allow_list_resolution_tx": {
                             "nullable": true,
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_available_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_fee_payer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx_index": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_log_index": {
+                            "nullable": true,
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -660,10 +880,65 @@
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
                           },
+                          "l1_allow_list_proposer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_allow_list_approver": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
                           "l1_allow_list_resolution_tx": {
                             "nullable": true,
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_available_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_fee_payer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx_index": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_log_index": {
+                            "nullable": true,
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -805,10 +1080,65 @@
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
                           },
+                          "l1_allow_list_proposer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_allow_list_approver": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
                           "l1_allow_list_resolution_tx": {
                             "nullable": true,
                             "type": "string",
                             "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$"
+                          },
+                          "l1_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_available_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_block": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_submitter": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_fee_payer": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l1_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{64}$"
+                          },
+                          "l2_registration_tx_index": {
+                            "nullable": true,
+                            "type": "number"
+                          },
+                          "l2_registration_log_index": {
+                            "nullable": true,
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -891,111 +1221,15 @@
           }
         }
       }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health check",
-        "tags": [
-          "Health"
-        ],
-        "description": "Check if the service is healthy",
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "healthy"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "status"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ready": {
-      "get": {
-        "summary": "Readiness check",
-        "tags": [
-          "Health"
-        ],
-        "description": "Check if the service is ready (including database connectivity)",
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ready"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "status"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "unavailable"
-                      ]
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "error"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "/",
       "description": "Development server"
     }
   ],
   "tags": [
-    {
-      "name": "Health",
-      "description": "Health and readiness checks"
-    },
     {
       "name": "Tokens",
       "description": "Token operations"

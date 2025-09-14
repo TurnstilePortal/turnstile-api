@@ -1,5 +1,5 @@
 {
-  "id": "6b2ed6d1-8969-4013-ac8e-2f91e83fc40d",
+  "id": "337dfd24-3c84-4db4-935d-50dfc3c373cc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -117,14 +117,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "l1_allow_list_proposer": {
+          "name": "l1_allow_list_proposer",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l1_allow_list_approver": {
+          "name": "l1_allow_list_approver",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "l1_allow_list_resolution_tx": {
           "name": "l1_allow_list_resolution_tx",
           "type": "varchar(66)",
           "primaryKey": false,
           "notNull": false
         },
+        "l1_portal_registration_submitter": {
+          "name": "l1_portal_registration_submitter",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "l1_registration_block": {
           "name": "l1_registration_block",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l2_registration_available_block": {
+          "name": "l2_registration_available_block",
           "type": "bigint",
           "primaryKey": false,
           "notNull": false
@@ -135,8 +159,26 @@
           "primaryKey": false,
           "notNull": false
         },
+        "l2_portal_registration_submitter": {
+          "name": "l2_portal_registration_submitter",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l2_portal_registration_fee_payer": {
+          "name": "l2_portal_registration_fee_payer",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "l1_registration_tx": {
           "name": "l1_registration_tx",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "l2_registration_tx": {
+          "name": "l2_registration_tx",
           "type": "varchar(66)",
           "primaryKey": false,
           "notNull": false

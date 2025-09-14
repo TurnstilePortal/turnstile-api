@@ -34,11 +34,51 @@ export const tokenSchema = z.object({
     .regex(/^0x[a-fA-F0-9]{64}$/)
     .nullable()
     .optional(),
+  l1_allow_list_proposer: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .nullable()
+    .optional(),
+  l1_allow_list_approver: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .nullable()
+    .optional(),
   l1_allow_list_resolution_tx: z
     .string()
     .regex(/^0x[a-fA-F0-9]{64}$/)
     .nullable()
     .optional(),
+  l1_registration_submitter: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .nullable()
+    .optional(),
+  l1_registration_block: z.number().nullable().optional(),
+  l2_registration_available_block: z.number().nullable().optional(),
+  l2_registration_block: z.number().nullable().optional(),
+  l2_registration_submitter: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/)
+    .nullable()
+    .optional(),
+  l2_registration_fee_payer: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/)
+    .nullable()
+    .optional(),
+  l1_registration_tx: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/)
+    .nullable()
+    .optional(),
+  l2_registration_tx: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/)
+    .nullable()
+    .optional(),
+  l2_registration_tx_index: z.number().nullable().optional(),
+  l2_registration_log_index: z.number().nullable().optional(),
 });
 
 // For runtime validation with transforms

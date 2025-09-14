@@ -1,18 +1,41 @@
 import { type AztecNode, createAztecNodeClient } from "@aztec/aztec.js";
 import type { NewToken } from "@turnstile-portal/api-common/schema";
+import { createPublicClient, http } from "viem";
+import { anvil, mainnet, sepolia } from "viem/chains";
+import { getDatabase } from "../db.js";
+import { MetadataService } from "../services/metadata.js";
 import { normalizeL1Address, normalizeL2Address } from "../utils/address.js";
 import { scanForRegisterEvents } from "../utils/portal-events.js";
+
+// Helper function to get chain by network name
+function getChainByNetwork(network: string) {
+  switch (network) {
+    case "mainnet":
+      return mainnet;
+    case "sepolia":
+    case "testnet":
+      return sepolia;
+    case "sandbox":
+      return anvil;
+    default:
+      console.warn(`Unknown network "${network}", using undefined`);
+      return undefined;
+  }
+}
 
 export interface L2CollectorConfig {
   nodeUrl: string;
   portalAddress: string;
   startBlock?: number;
   chunkSize?: number;
+  l1RpcUrl: string;
+  network: string;
 }
 
 export class L2Collector {
   private aztecNode: AztecNode;
   private config: Required<L2CollectorConfig>;
+  private metadataService: MetadataService;
 
   constructor(config: L2CollectorConfig) {
     this.config = {
@@ -22,6 +45,15 @@ export class L2Collector {
     };
 
     this.aztecNode = createAztecNodeClient(this.config.nodeUrl);
+
+    // Create L1 client for metadata service
+    const chain = getChainByNetwork(this.config.network);
+    const l1Client = createPublicClient({
+      chain,
+      transport: http(this.config.l1RpcUrl),
+    });
+
+    this.metadataService = new MetadataService(l1Client, getDatabase());
   }
 
   async getL2TokenRegistrations(fromBlock: number, toBlock: number): Promise<Partial<NewToken>[]> {
@@ -32,12 +64,41 @@ export class L2Collector {
     const registrations: Partial<NewToken>[] = [];
 
     for (const event of events) {
+      const block = await this.aztecNode.getBlock(event.blockNumber);
+      if (!block) {
+        throw new Error(`L2 Block ${event.blockNumber} not found`);
+      }
+      const txEffect = block.body.txEffects[event.txIndex];
+      if (!txEffect) {
+        throw new Error(`L2 Tx index ${event.txIndex} not found in block ${event.blockNumber}`);
+      }
+      const txHash = txEffect.txHash;
+
+      // TODO: Figure out how to get fee payer & msg sender.
+      // getTxByHash doesn't work because it only return the tx for non-mined txs.
+      // const tx = await this.aztecNode.getTxByHash(txHash);
+
+      // if (!tx) {
+      //   throw new Error(`L2 Tx ${txHash.toString()} not found`);
+      // }
+      // const publicInputs = tx.data.forPublic;
+      // if (!publicInputs) {
+      //   throw new Error(`L2 Tx ${txHash.toString()} has no public data`);
+      // }
+      // const msgSender = publicInputs.publicTeardownCallRequest.msgSender;
+
+      const l1Address = normalizeL1Address(event.ethToken.toString());
+
+      // Ensure token metadata exists before storing L2 registration
+      await this.metadataService.ensureTokenMetadata(l1Address);
+
       registrations.push({
-        l1Address: normalizeL1Address(event.ethToken.toString()),
+        l1Address,
         l2Address: normalizeL2Address(event.aztecToken.toString()),
         l2RegistrationBlock: event.blockNumber,
         l2RegistrationTxIndex: event.txIndex,
         l2RegistrationLogIndex: event.logIndex,
+        l2RegistrationTx: txHash.toString(),
       });
     }
 

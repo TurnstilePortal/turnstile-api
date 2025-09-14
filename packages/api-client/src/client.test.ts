@@ -12,27 +12,6 @@ describe("TurnstileApiClient", () => {
     mockFetch.mockClear();
   });
 
-  describe("getHealth", () => {
-    it("should fetch health status", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ status: "healthy" }),
-      });
-
-      const result = await client.getHealth();
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:8080/health",
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-          }),
-        }),
-      );
-      expect(result).toEqual({ status: "healthy" });
-    });
-  });
-
   describe("getTokens", () => {
     it("should fetch tokens with pagination", async () => {
       const mockResponse = {
@@ -131,7 +110,7 @@ describe("TurnstileApiClient", () => {
         },
       });
 
-      await expect(client.getHealth()).rejects.toThrow("HTTP 500: Internal Server Error");
+      await expect(client.getTokens()).rejects.toThrow("HTTP 500: Internal Server Error");
     });
   });
 

@@ -1,99 +1,119 @@
-import { type NewToken, tokens } from "@turnstile-portal/api-common/schema";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { NewToken } from "@turnstile-portal/api-common/schema";
+import { tokens } from "@turnstile-portal/api-common/schema";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DbClient } from "../db.js";
 import {
-  type DbClient,
   destroyDatabase,
   getDatabase,
+  getTokenMetadataByL1Address,
   setDatabase,
   storeL1TokenAllowListEvents,
   storeL1TokenRegistrations,
   storeL2TokenRegistrations,
-} from "../db";
+} from "../db.js";
+
+// Mock createDbClient module
+vi.mock("@turnstile-portal/api-common", () => {
+  const mockDb = {
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    onConflictDoUpdate: vi.fn().mockReturnThis(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    $client: {},
+  };
+  return {
+    createDbClient: vi.fn(() => mockDb),
+  };
+});
 
 describe("Database Module", () => {
-  const originalEnv = process.env;
-
   beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv };
-  });
-
-  afterEach(async () => {
-    await destroyDatabase();
-    process.env = originalEnv;
+    vi.clearAllMocks();
     setDatabase(null);
   });
 
   describe("getDatabase", () => {
-    it("should throw error when DATABASE_URL is not set", () => {
+    it("should throw error if DATABASE_URL is not set", () => {
+      const originalEnv = process.env.DATABASE_URL;
       delete process.env.DATABASE_URL;
+
       expect(() => getDatabase()).toThrow("DATABASE_URL environment variable is not set");
+
+      process.env.DATABASE_URL = originalEnv;
     });
 
-    it("should create database connection when DATABASE_URL is set", () => {
-      process.env.DATABASE_URL = "postgresql://test:test@localhost/test";
+    it("should create database instance if not exists", () => {
+      const originalEnv = process.env.DATABASE_URL;
+      process.env.DATABASE_URL = "postgres://localhost:5432/test";
+
+      // Since we already have a global mock, just verify the behavior
       const db = getDatabase();
       expect(db).toBeDefined();
-      expect(db).toHaveProperty("select");
-      expect(db).toHaveProperty("insert");
-      expect(db).toHaveProperty("update");
-      expect(db).toHaveProperty("delete");
-    });
 
-    it("should return same instance on multiple calls", () => {
-      process.env.DATABASE_URL = "postgresql://test:test@localhost/test";
-      const db1 = getDatabase();
+      // Should return same instance on subsequent calls
       const db2 = getDatabase();
-      expect(db1).toBe(db2);
-    });
+      expect(db2).toBe(db);
 
-    it("should support different database URL formats", () => {
-      const urls = [
-        "postgresql://user:pass@localhost/db",
-        "postgres://user:pass@localhost:5432/db",
-        "postgresql://user:pass@localhost/db?sslmode=disable",
-      ];
-
-      for (const url of urls) {
-        process.env.DATABASE_URL = url;
-        const db = getDatabase();
-        expect(db).toBeDefined();
-        destroyDatabase();
-      }
+      process.env.DATABASE_URL = originalEnv;
     });
   });
 
   describe("destroyDatabase", () => {
-    it("should destroy database connection", async () => {
-      process.env.DATABASE_URL = "postgresql://test:test@localhost/test";
-      const db1 = getDatabase();
+    it("should close database connection if exists", async () => {
+      const mockEnd = vi.fn();
+      const mockDb = {
+        $client: {
+          end: mockEnd,
+          ended: false,
+        },
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
       await destroyDatabase();
 
-      const db2 = getDatabase();
-      expect(db1).not.toBe(db2);
+      expect(mockEnd).toHaveBeenCalled();
     });
 
-    it("should handle multiple destroy calls gracefully", async () => {
-      process.env.DATABASE_URL = "postgresql://test:test@localhost/test";
-      getDatabase();
-
-      await destroyDatabase();
-      await destroyDatabase();
-
-      expect(true).toBe(true);
+    it("should not throw if database is null", async () => {
+      setDatabase(null);
+      await expect(destroyDatabase()).resolves.not.toThrow();
     });
+  });
 
-    it("should handle destroy without initialization", async () => {
-      await expect(destroyDatabase()).resolves.toBeUndefined();
+  describe("getTokenMetadataByL1Address", () => {
+    it("should return token metadata if exists", async () => {
+      const mockResult = [{ symbol: "TKN", name: "Token", decimals: 18 }];
+      const mockDb = {
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue(mockResult),
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
+      const result = await getTokenMetadataByL1Address("0x123");
+
+      expect(result).toEqual(mockResult[0]);
+      expect(mockDb.select).toHaveBeenCalledWith({
+        symbol: tokens.symbol,
+        name: tokens.name,
+        decimals: tokens.decimals,
+      });
     });
   });
 
   describe("storeL1TokenRegistrations", () => {
-    it("should insert new tokens and update existing ones", async () => {
+    it("should update existing tokens with L1 registration data", async () => {
       const mockDb = {
-        insert: vi.fn().mockReturnThis(),
-        values: vi.fn().mockReturnThis(),
-        onConflictDoUpdate: vi.fn(),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
       };
       setDatabase(mockDb as unknown as DbClient);
 
@@ -105,24 +125,31 @@ describe("Database Module", () => {
           l1Address: "0x123",
           l1RegistrationBlock: 1,
           l1RegistrationTx: "0xabc",
-          l2RegistrationBlock: 100,
+          l1RegistrationSubmitter: "0xsubmitter",
+          l2RegistrationAvailableBlock: 100,
         },
       ];
 
       await storeL1TokenRegistrations(registrations);
 
-      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
-      expect(mockDb.values).toHaveBeenCalledWith(registrations[0]);
-      expect(mockDb.onConflictDoUpdate).toHaveBeenCalled();
+      expect(mockDb.update).toHaveBeenCalledWith(tokens);
+      expect(mockDb.set).toHaveBeenCalledWith({
+        l1RegistrationBlock: 1,
+        l1RegistrationTx: "0xabc",
+        l1RegistrationSubmitter: "0xsubmitter",
+        l2RegistrationAvailableBlock: 100,
+        updatedAt: expect.any(Date),
+      });
+      expect(mockDb.where).toHaveBeenCalled();
     });
   });
 
   describe("storeL2TokenRegistrations", () => {
-    it("should upsert tokens with L2 data", async () => {
+    it("should update existing tokens with L2 data", async () => {
       const mockDb = {
-        insert: vi.fn().mockReturnThis(),
-        values: vi.fn().mockReturnThis(),
-        onConflictDoUpdate: vi.fn(),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
       };
       setDatabase(mockDb as unknown as DbClient);
 
@@ -131,33 +158,52 @@ describe("Database Module", () => {
           l1Address: "0x123",
           l2Address: "0x456",
           l2RegistrationBlock: 200,
+          l2RegistrationTxIndex: 1,
+          l2RegistrationLogIndex: 2,
+          l2RegistrationTx: "0xtx",
+          l2RegistrationFeePayer: "0xfeepayer",
+          l2RegistrationSubmitter: "0xsubmitter",
         },
       ];
 
       await storeL2TokenRegistrations(registrations);
 
-      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
-      expect(mockDb.values).toHaveBeenCalledWith(
-        expect.objectContaining({
-          l1Address: "0x123",
-          l2Address: "0x456",
-          l2RegistrationBlock: 200,
-        }),
-      );
-      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          target: tokens.l1Address,
-        }),
-      );
+      expect(mockDb.update).toHaveBeenCalledWith(tokens);
+      expect(mockDb.set).toHaveBeenCalledWith({
+        l2Address: "0x456",
+        l2RegistrationBlock: 200,
+        l2RegistrationTxIndex: 1,
+        l2RegistrationLogIndex: 2,
+        l2RegistrationTx: "0xtx",
+        l2RegistrationFeePayer: "0xfeepayer",
+        l2RegistrationSubmitter: "0xsubmitter",
+        updatedAt: expect.any(Date),
+      });
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it("should skip tokens without L1 address", async () => {
+      const mockDb = {
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
+      const registrations: Partial<NewToken>[] = [{ l2Address: "0x456" }];
+
+      await storeL2TokenRegistrations(registrations);
+
+      expect(mockDb.update).not.toHaveBeenCalled();
     });
   });
 
   describe("storeL1TokenAllowListEvents", () => {
-    it("should insert new tokens with allowlist data", async () => {
+    it("should update existing tokens with allowlist data", async () => {
       const mockDb = {
-        insert: vi.fn().mockReturnThis(),
-        values: vi.fn().mockReturnThis(),
-        onConflictDoUpdate: vi.fn(),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
       };
       setDatabase(mockDb as unknown as DbClient);
 
@@ -166,35 +212,29 @@ describe("Database Module", () => {
           l1Address: "0x123",
           l1AllowListStatus: "PROPOSED",
           l1AllowListProposalTx: "0xabc",
+          l1AllowListProposer: "0xproposer",
         },
       ];
 
       await storeL1TokenAllowListEvents(events);
 
-      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
-      expect(mockDb.values).toHaveBeenCalledWith(
-        expect.objectContaining({
-          l1Address: "0x123",
-          l1AllowListStatus: "PROPOSED",
-          l1AllowListProposalTx: "0xabc",
-          l1AllowListResolutionTx: undefined,
-        }),
-      );
-      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          target: tokens.l1Address,
-          set: expect.objectContaining({
-            l1AllowListStatus: "PROPOSED",
-          }),
-        }),
-      );
+      expect(mockDb.update).toHaveBeenCalledWith(tokens);
+      expect(mockDb.set).toHaveBeenCalledWith({
+        l1AllowListStatus: "PROPOSED",
+        l1AllowListProposalTx: "0xabc",
+        l1AllowListProposer: "0xproposer",
+        l1AllowListResolutionTx: undefined,
+        l1AllowListApprover: undefined,
+        updatedAt: expect.any(Date),
+      });
+      expect(mockDb.where).toHaveBeenCalled();
     });
 
     it("should update existing tokens with allowlist data without overwriting registration data", async () => {
       const mockDb = {
-        insert: vi.fn().mockReturnThis(),
-        values: vi.fn().mockReturnThis(),
-        onConflictDoUpdate: vi.fn(),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
       };
       setDatabase(mockDb as unknown as DbClient);
 
@@ -203,21 +243,37 @@ describe("Database Module", () => {
           l1Address: "0x123",
           l1AllowListStatus: "ACCEPTED",
           l1AllowListResolutionTx: "0xdef",
+          l1AllowListApprover: "0xapprover",
         },
       ];
 
       await storeL1TokenAllowListEvents(events);
 
-      expect(mockDb.insert).toHaveBeenCalledWith(tokens);
-      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          target: tokens.l1Address,
-          set: expect.objectContaining({
-            l1AllowListStatus: "ACCEPTED",
-            l1AllowListResolutionTx: "0xdef",
-          }),
-        }),
-      );
+      expect(mockDb.update).toHaveBeenCalledWith(tokens);
+      expect(mockDb.set).toHaveBeenCalledWith({
+        l1AllowListStatus: "ACCEPTED",
+        l1AllowListProposalTx: undefined,
+        l1AllowListProposer: undefined,
+        l1AllowListResolutionTx: "0xdef",
+        l1AllowListApprover: "0xapprover",
+        updatedAt: expect.any(Date),
+      });
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it("should skip events without L1 address", async () => {
+      const mockDb = {
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue(undefined),
+      };
+      setDatabase(mockDb as unknown as DbClient);
+
+      const events: NewToken[] = [{ l1AllowListStatus: "PROPOSED" }];
+
+      await storeL1TokenAllowListEvents(events);
+
+      expect(mockDb.update).not.toHaveBeenCalled();
     });
   });
 });

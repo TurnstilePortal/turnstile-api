@@ -20,10 +20,17 @@ export const tokens = pgTable("tokens", {
   // Registration tracking
   l1AllowListStatus: l1AllowListStatusEnum("l1_allow_list_status"),
   l1AllowListProposalTx: varchar("l1_allow_list_proposal_tx", { length: 66 }),
+  l1AllowListProposer: varchar("l1_allow_list_proposer", { length: 42 }),
+  l1AllowListApprover: varchar("l1_allow_list_approver", { length: 42 }),
   l1AllowListResolutionTx: varchar("l1_allow_list_resolution_tx", { length: 66 }),
+  l1RegistrationSubmitter: varchar("l1_portal_registration_submitter", { length: 42 }),
   l1RegistrationBlock: bigint("l1_registration_block", { mode: "number" }),
+  l2RegistrationAvailableBlock: bigint("l2_registration_available_block", { mode: "number" }),
   l2RegistrationBlock: bigint("l2_registration_block", { mode: "number" }),
+  l2RegistrationSubmitter: varchar("l2_portal_registration_submitter", { length: 66 }),
+  l2RegistrationFeePayer: varchar("l2_portal_registration_fee_payer", { length: 66 }),
   l1RegistrationTx: varchar("l1_registration_tx", { length: 66 }),
+  l2RegistrationTx: varchar("l2_registration_tx", { length: 66 }),
   l2RegistrationTxIndex: integer("l2_registration_tx_index"),
   l2RegistrationLogIndex: integer("l2_registration_log_index"),
 

@@ -43,6 +43,7 @@ export async function extractRegisterEvents(logs: GetPublicLogsResponse["logs"])
     if (!log || !log.id) {
       throw new Error("Log is missing id");
     }
+
     return {
       logId: log.id,
       ethToken: EthAddress.fromField(new Fr(event.eth_token.inner)),

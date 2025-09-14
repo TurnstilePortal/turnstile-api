@@ -46,7 +46,19 @@ export interface paths {
                 /** @enum {string|null} */
                 l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
                 l1_allow_list_proposal_tx?: string | null;
+                l1_allow_list_proposer?: string | null;
+                l1_allow_list_approver?: string | null;
                 l1_allow_list_resolution_tx?: string | null;
+                l1_registration_submitter?: string | null;
+                l1_registration_block?: number | null;
+                l2_registration_available_block?: number | null;
+                l2_registration_block?: number | null;
+                l2_registration_submitter?: string | null;
+                l2_registration_fee_payer?: string | null;
+                l1_registration_tx?: string | null;
+                l2_registration_tx?: string | null;
+                l2_registration_tx_index?: number | null;
+                l2_registration_log_index?: number | null;
               }[];
               pagination: {
                 limit: number;
@@ -116,7 +128,19 @@ export interface paths {
               /** @enum {string|null} */
               l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
               l1_allow_list_proposal_tx?: string | null;
+              l1_allow_list_proposer?: string | null;
+              l1_allow_list_approver?: string | null;
               l1_allow_list_resolution_tx?: string | null;
+              l1_registration_submitter?: string | null;
+              l1_registration_block?: number | null;
+              l2_registration_available_block?: number | null;
+              l2_registration_block?: number | null;
+              l2_registration_submitter?: string | null;
+              l2_registration_fee_payer?: string | null;
+              l1_registration_tx?: string | null;
+              l2_registration_tx?: string | null;
+              l2_registration_tx_index?: number | null;
+              l2_registration_log_index?: number | null;
             };
           };
         };
@@ -205,7 +229,19 @@ export interface paths {
                 /** @enum {string|null} */
                 l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
                 l1_allow_list_proposal_tx?: string | null;
+                l1_allow_list_proposer?: string | null;
+                l1_allow_list_approver?: string | null;
                 l1_allow_list_resolution_tx?: string | null;
+                l1_registration_submitter?: string | null;
+                l1_registration_block?: number | null;
+                l2_registration_available_block?: number | null;
+                l2_registration_block?: number | null;
+                l2_registration_submitter?: string | null;
+                l2_registration_fee_payer?: string | null;
+                l1_registration_tx?: string | null;
+                l2_registration_tx?: string | null;
+                l2_registration_tx_index?: number | null;
+                l2_registration_log_index?: number | null;
               }[];
               pagination: {
                 limit: number;
@@ -279,7 +315,19 @@ export interface paths {
                 /** @enum {string|null} */
                 l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
                 l1_allow_list_proposal_tx?: string | null;
+                l1_allow_list_proposer?: string | null;
+                l1_allow_list_approver?: string | null;
                 l1_allow_list_resolution_tx?: string | null;
+                l1_registration_submitter?: string | null;
+                l1_registration_block?: number | null;
+                l2_registration_available_block?: number | null;
+                l2_registration_block?: number | null;
+                l2_registration_submitter?: string | null;
+                l2_registration_fee_payer?: string | null;
+                l1_registration_tx?: string | null;
+                l2_registration_tx?: string | null;
+                l2_registration_tx_index?: number | null;
+                l2_registration_log_index?: number | null;
               }[];
               pagination: {
                 limit: number;
@@ -353,7 +401,19 @@ export interface paths {
                 /** @enum {string|null} */
                 l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
                 l1_allow_list_proposal_tx?: string | null;
+                l1_allow_list_proposer?: string | null;
+                l1_allow_list_approver?: string | null;
                 l1_allow_list_resolution_tx?: string | null;
+                l1_registration_submitter?: string | null;
+                l1_registration_block?: number | null;
+                l2_registration_available_block?: number | null;
+                l2_registration_block?: number | null;
+                l2_registration_submitter?: string | null;
+                l2_registration_fee_payer?: string | null;
+                l1_registration_tx?: string | null;
+                l2_registration_tx?: string | null;
+                l2_registration_tx_index?: number | null;
+                l2_registration_log_index?: number | null;
               }[];
               pagination: {
                 limit: number;
@@ -427,7 +487,19 @@ export interface paths {
                 /** @enum {string|null} */
                 l1_allow_list_status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | null;
                 l1_allow_list_proposal_tx?: string | null;
+                l1_allow_list_proposer?: string | null;
+                l1_allow_list_approver?: string | null;
                 l1_allow_list_resolution_tx?: string | null;
+                l1_registration_submitter?: string | null;
+                l1_registration_block?: number | null;
+                l2_registration_available_block?: number | null;
+                l2_registration_block?: number | null;
+                l2_registration_submitter?: string | null;
+                l2_registration_fee_payer?: string | null;
+                l1_registration_tx?: string | null;
+                l2_registration_tx?: string | null;
+                l2_registration_tx_index?: number | null;
+                l2_registration_log_index?: number | null;
               }[];
               pagination: {
                 limit: number;
@@ -456,103 +528,6 @@ export interface paths {
           };
           content: {
             "application/json": {
-              error: string;
-            };
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/health": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Health check
-     * @description Check if the service is healthy
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Default Response */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": {
-              /** @enum {string} */
-              status: "healthy";
-            };
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/ready": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Readiness check
-     * @description Check if the service is ready (including database connectivity)
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Default Response */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": {
-              /** @enum {string} */
-              status: "ready";
-            };
-          };
-        };
-        /** @description Default Response */
-        503: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": {
-              /** @enum {string} */
-              status: "unavailable";
               error: string;
             };
           };

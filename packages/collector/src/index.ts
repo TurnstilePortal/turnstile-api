@@ -24,6 +24,8 @@ async function main() {
       portalAddress: config.l2.portalAddress,
       startBlock: config.l2.startBlock,
       chunkSize: config.l2.chunkSize,
+      l1RpcUrl: config.l1.rpcUrl,
+      network: config.l1.network,
     },
     pollingInterval,
   });

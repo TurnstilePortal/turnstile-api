@@ -39,6 +39,8 @@ export class CollectorService {
         ...config.l2,
         startBlock: config.l2.startBlock ?? 1,
         chunkSize: config.l2.chunkSize ?? 100,
+        l1RpcUrl: config.l1.rpcUrl,
+        network: config.l1.network,
       },
       pollingInterval: config.pollingInterval ?? 30000,
     };
