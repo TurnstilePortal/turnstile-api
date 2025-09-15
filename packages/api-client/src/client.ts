@@ -16,6 +16,12 @@ export interface PaginationParams {
   cursor?: number;
 }
 
+export interface ApiClientOptions {
+  limit?: number;
+  cursor?: number;
+  cache?: RequestCache; // 'default' | 'no-store' | 'reload' | 'no-cache' | 'force-cache' | 'only-if-cached'
+}
+
 export function createSandboxClient(config?: Omit<ClientConfig, "baseUrl">) {
   return new TurnstileApiClient({ baseUrl: SANDBOX_BASE_URL, ...config });
 }
@@ -42,10 +48,11 @@ export class TurnstileApiClient {
     this.fetchFn = config.fetch || fetch;
   }
 
-  private async request<T>(path: string, options?: RequestInit): Promise<T> {
+  private async request<T>(path: string, options?: RequestInit & { cache?: RequestCache }): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const response = await this.fetchFn(url, {
+    const response = await this.fetchFn.call(globalThis, url, {
       ...options,
+      cache: options?.cache,
       headers: {
         ...this.headers,
         ...options?.headers,
@@ -82,63 +89,63 @@ export class TurnstileApiClient {
   /**
    * Get a paginated list of all tokens
    */
-  async getTokens(params?: PaginationParams): Promise<TokensResponse> {
+  async getTokens(params?: PaginationParams, options?: { cache?: RequestCache }): Promise<TokensResponse> {
     const queryString = this.buildQueryString(params || {});
-    return this.request<TokensResponse>(`/tokens${queryString}`);
+    return this.request<TokensResponse>(`/tokens${queryString}`, options);
   }
 
   /**
    * Get a token by its L1 or L2 address
    */
-  async getTokenByAddress(address: string): Promise<Token> {
-    return this.request<Token>(`/tokens/${address}`);
+  async getTokenByAddress(address: string, options?: { cache?: RequestCache }): Promise<Token> {
+    return this.request<Token>(`/tokens/${address}`, options);
   }
 
   /**
    * Get a paginated list of tokens with PROPOSED status
    */
-  async getProposedTokens(params?: PaginationParams): Promise<TokensResponse> {
+  async getProposedTokens(params?: PaginationParams, options?: { cache?: RequestCache }): Promise<TokensResponse> {
     const queryString = this.buildQueryString(params || {});
-    return this.request<TokensResponse>(`/tokens/proposed${queryString}`);
+    return this.request<TokensResponse>(`/tokens/proposed${queryString}`, options);
   }
 
   /**
    * Get a paginated list of tokens with REJECTED status
    */
-  async getRejectedTokens(params?: PaginationParams): Promise<TokensResponse> {
+  async getRejectedTokens(params?: PaginationParams, options?: { cache?: RequestCache }): Promise<TokensResponse> {
     const queryString = this.buildQueryString(params || {});
-    return this.request<TokensResponse>(`/tokens/rejected${queryString}`);
+    return this.request<TokensResponse>(`/tokens/rejected${queryString}`, options);
   }
 
   /**
    * Get a paginated list of tokens with ACCEPTED status that are not yet fully bridged
    */
-  async getAcceptedTokens(params?: PaginationParams): Promise<TokensResponse> {
+  async getAcceptedTokens(params?: PaginationParams, options?: { cache?: RequestCache }): Promise<TokensResponse> {
     const queryString = this.buildQueryString(params || {});
-    return this.request<TokensResponse>(`/tokens/accepted${queryString}`);
+    return this.request<TokensResponse>(`/tokens/accepted${queryString}`, options);
   }
 
   /**
    * Get a paginated list of fully bridged tokens (with both L1 and L2 addresses)
    */
-  async getBridgedTokens(params?: PaginationParams): Promise<TokensResponse> {
+  async getBridgedTokens(params?: PaginationParams, options?: { cache?: RequestCache }): Promise<TokensResponse> {
     const queryString = this.buildQueryString(params || {});
-    return this.request<TokensResponse>(`/tokens/bridged${queryString}`);
+    return this.request<TokensResponse>(`/tokens/bridged${queryString}`, options);
   }
 
   /**
    * Helper method to fetch all pages of a paginated endpoint
    */
   async *getAllPages<T extends TokensResponse>(
-    fetcher: (params: PaginationParams) => Promise<T>,
-    limit = 100,
-    startCursor?: number,
+    fetcher: (params: PaginationParams, options?: { cache?: RequestCache }) => Promise<T>,
+    options?: ApiClientOptions,
   ): AsyncGenerator<T["data"][number], void, unknown> {
-    let cursor = startCursor ?? 0;
+    const limit = options?.limit ?? 100;
+    let cursor = options?.cursor ?? 0;
     let hasMore = true;
 
     while (hasMore) {
-      const response = await fetcher({ limit, cursor });
+      const response = await fetcher({ limit, cursor }, options);
 
       for (const item of response.data) {
         yield item;
@@ -155,12 +162,11 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all tokens (auto-paginated)
-   * @param limit - Number of items per page (default: 100)
-   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
+   * @param options - Options including limit, cursor, and cache settings
    */
-  async getAllTokens(limit = 100, startCursor?: number): Promise<Token[]> {
+  async getAllTokens(options?: ApiClientOptions): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getTokens(params), limit, startCursor)) {
+    for await (const token of this.getAllPages((params, options) => this.getTokens(params, options), options)) {
       tokens.push(token);
     }
     return tokens;
@@ -168,12 +174,11 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all bridged tokens (auto-paginated)
-   * @param limit - Number of items per page (default: 100)
-   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
+   * @param options - Options including limit, cursor, and cache settings
    */
-  async getAllBridgedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
+  async getAllBridgedTokens(options?: ApiClientOptions): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getBridgedTokens(params), limit, startCursor)) {
+    for await (const token of this.getAllPages((params, options) => this.getBridgedTokens(params, options), options)) {
       tokens.push(token);
     }
     return tokens;
@@ -181,12 +186,11 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all proposed tokens (auto-paginated)
-   * @param limit - Number of items per page (default: 100)
-   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
+   * @param options - Options including limit, cursor, and cache settings
    */
-  async getAllProposedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
+  async getAllProposedTokens(options?: ApiClientOptions): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getProposedTokens(params), limit, startCursor)) {
+    for await (const token of this.getAllPages((params, options) => this.getProposedTokens(params, options), options)) {
       tokens.push(token);
     }
     return tokens;
@@ -194,12 +198,11 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all accepted tokens (auto-paginated)
-   * @param limit - Number of items per page (default: 100)
-   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
+   * @param options - Options including limit, cursor, and cache settings
    */
-  async getAllAcceptedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
+  async getAllAcceptedTokens(options?: ApiClientOptions): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getAcceptedTokens(params), limit, startCursor)) {
+    for await (const token of this.getAllPages((params, cache) => this.getAcceptedTokens(params, cache), options)) {
       tokens.push(token);
     }
     return tokens;
@@ -207,12 +210,11 @@ export class TurnstileApiClient {
 
   /**
    * Fetch all rejected tokens (auto-paginated)
-   * @param limit - Number of items per page (default: 100)
-   * @param startCursor - Optional cursor to start fetching from (useful for incremental updates)
+   * @param options - Options including limit, cursor, and cache settings
    */
-  async getAllRejectedTokens(limit = 100, startCursor?: number): Promise<Token[]> {
+  async getAllRejectedTokens(options?: ApiClientOptions): Promise<Token[]> {
     const tokens: Token[] = [];
-    for await (const token of this.getAllPages((params) => this.getRejectedTokens(params), limit, startCursor)) {
+    for await (const token of this.getAllPages((params, cache) => this.getRejectedTokens(params, cache), options)) {
       tokens.push(token);
     }
     return tokens;

@@ -130,6 +130,35 @@ Network-specific environment files:
 - `.env.testnet`
 - `.env.mainnet`
 
+### Collector Backfill Mode
+
+The collector supports backfill mode for re-processing historical data:
+
+- `FORCE_L1_START_BLOCK`: Force L1 collector to start from this block (ignores database state)
+- `FORCE_L2_START_BLOCK`: Force L2 collector to start from this block (ignores database state)
+
+When either of these environment variables is set:
+1. The collector starts from the specified block instead of the database's last scanned block
+2. Processes blocks normally and updates the database as it goes
+3. **Exits automatically when caught up with the blockchain** (instead of continuing to poll)
+
+This is useful for:
+- Backfilling missed block ranges
+- Re-processing historical data
+- One-time data imports
+
+Example usage:
+```bash
+# Backfill L1 from block 1000000
+FORCE_L1_START_BLOCK=1000000 pnpm dev
+
+# Backfill both L1 and L2
+FORCE_L1_START_BLOCK=1000000 FORCE_L2_START_BLOCK=5000 pnpm dev
+
+# Test with CLI dry-run
+pnpm cli --l1-dry-run --force-l1-start-block 1000000 --to-block 1000100
+```
+
 ## API Endpoints
 
 - `GET /api/v1/tokens` - List tokens with pagination (`limit`, `offset`)

@@ -2,9 +2,10 @@ import "dotenv/config";
 import { getNetworkConfig } from "./config/networks.js";
 import { destroyDatabase } from "./db.js";
 import { CollectorService } from "./services/collector-service.js";
+import { logger } from "./utils/logger.js";
 
 async function main() {
-  console.log("Starting blockchain collector...");
+  logger.info("Starting blockchain collector...");
 
   const config = await getNetworkConfig();
   const pollingInterval = parseInt(process.env.POLLING_INTERVAL_MS || "30000", 10);
@@ -31,13 +32,13 @@ async function main() {
   });
 
   process.on("SIGINT", async () => {
-    console.log("\nReceived SIGINT, shutting down gracefully...");
+    logger.info("Received SIGINT, shutting down gracefully...");
     await destroyDatabase();
     process.exit(0);
   });
 
   process.on("SIGTERM", async () => {
-    console.log("\nReceived SIGTERM, shutting down gracefully...");
+    logger.info("Received SIGTERM, shutting down gracefully...");
     await destroyDatabase();
     process.exit(0);
   });
@@ -45,7 +46,7 @@ async function main() {
   try {
     await service.start();
   } catch (error) {
-    console.error("Fatal error:", error);
+    logger.error(error, "Fatal error");
     await destroyDatabase();
     process.exit(1);
   }

@@ -4,6 +4,7 @@ import { erc20Abi, type PublicClient } from "viem";
 import type { DbClient } from "../db.js";
 import { getTokenMetadataByL1Address } from "../db.js";
 import { normalizeL1Address } from "../utils/address.js";
+import { logger } from "../utils/logger.js";
 
 export class MetadataService {
   private presentCache = new Set<string>();
@@ -36,7 +37,7 @@ export class MetadataService {
         return "present";
       }
     } catch (err) {
-      console.warn(`MetadataService DB pre-check failed for ${l1Address}: ${(err as Error).message}`);
+      logger.warn(`MetadataService DB pre-check failed for ${l1Address}: ${(err as Error).message}`);
       // Continue to attempt fetch/write
     }
 
@@ -81,7 +82,7 @@ export class MetadataService {
 
       return "fetched";
     } catch (err) {
-      console.warn(`MetadataService ensureTokenMetadata failed for ${l1Address}: ${(err as Error).message}`);
+      logger.warn(`MetadataService ensureTokenMetadata failed for ${l1Address}: ${(err as Error).message}`);
       // Allow future retries
       this.presentCache.delete(addr);
       return "failed";

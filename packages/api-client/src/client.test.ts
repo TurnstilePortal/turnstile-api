@@ -131,7 +131,7 @@ describe("TurnstileApiClient", () => {
         .mockResolvedValueOnce({ ok: true, json: async () => page2 });
 
       const tokens = [];
-      for await (const token of client.getAllPages((params) => client.getTokens(params), 1)) {
+      for await (const token of client.getAllPages((params) => client.getTokens(params), { limit: 1 })) {
         tokens.push(token);
       }
 
@@ -158,7 +158,7 @@ describe("TurnstileApiClient", () => {
         .mockResolvedValueOnce({ ok: true, json: async () => page1 })
         .mockResolvedValueOnce({ ok: true, json: async () => page2 });
 
-      const tokens = await client.getAllTokens(1);
+      const tokens = await client.getAllTokens({ limit: 1 });
 
       expect(tokens).toHaveLength(2);
       expect(tokens[0].symbol).toBe("TOKEN1");
@@ -180,7 +180,7 @@ describe("TurnstileApiClient", () => {
         .mockResolvedValueOnce({ ok: true, json: async () => page1 })
         .mockResolvedValueOnce({ ok: true, json: async () => page2 });
 
-      const tokens = await client.getAllTokens(1, 5);
+      const tokens = await client.getAllTokens({ limit: 1, cursor: 5 });
 
       expect(tokens).toHaveLength(2);
       expect(tokens[0].symbol).toBe("TOKEN5");
@@ -206,7 +206,7 @@ describe("TurnstileApiClient", () => {
         .mockResolvedValueOnce({ ok: true, json: async () => page2 });
 
       const tokens = [];
-      for await (const token of client.getAllPages((params) => client.getTokens(params), 1, 10)) {
+      for await (const token of client.getAllPages((params) => client.getTokens(params), { limit: 1, cursor: 10 })) {
         tokens.push(token);
       }
 

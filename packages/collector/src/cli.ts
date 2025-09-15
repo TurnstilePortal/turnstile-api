@@ -4,9 +4,11 @@ import { config } from "dotenv";
 import { L1Collector } from "./collectors/l1.js";
 import { L2Collector } from "./collectors/l2.js";
 import { getNetworkConfig } from "./config/networks.js";
+import { logger } from "./utils/logger.js";
 
 // Load environment variables from the collector package's .env file
-config({ path: resolve(process.cwd(), "packages/collector/.env") });
+const envPath = resolve(process.cwd(), process.cwd().endsWith("collector") ? ".env" : "packages/collector/.env");
+config({ path: envPath });
 
 interface CLIOptions {
   l1DryRun?: boolean;
@@ -15,6 +17,8 @@ interface CLIOptions {
   toBlock?: string;
   verbose?: boolean;
   network?: string;
+  forceL1StartBlock?: string;
+  forceL2StartBlock?: string;
 }
 
 program
@@ -26,6 +30,8 @@ program
   .option("--from-block <number>", "Starting block number")
   .option("--to-block <number>", "Ending block number")
   .option("--network <name>", "Network to use (e.g., sepolia)")
+  .option("--force-l1-start-block <number>", "Force L1 collector to start from this block (backfill mode)")
+  .option("--force-l2-start-block <number>", "Force L2 collector to start from this block (backfill mode)")
   .option("-v, --verbose", "Verbose output")
   .parse();
 
@@ -71,7 +77,8 @@ async function runL1DryRun(fromBlock?: number, toBlock?: number): Promise<void> 
       console.log("\n📭 No L1 token registrations found in the specified block range");
     }
   } catch (error) {
-    console.error("\n❌ L1 collector error:", error);
+    console.error("\n❌ L1 collector error:");
+    logger.error(error, "L1 collector error");
     throw error;
   }
 }
@@ -114,7 +121,8 @@ async function runL2DryRun(fromBlock?: number, toBlock?: number): Promise<void> 
       console.log("\n📭 No L2 token registrations found in the specified block range");
     }
   } catch (error) {
-    console.error("\n❌ L2 collector error:", error);
+    console.error("\n❌ L2 collector error:");
+    logger.error(error, "L2 collector error");
     throw error;
   }
 }
@@ -127,11 +135,26 @@ async function main(): Promise<void> {
     if (options.network) {
       process.env.NETWORK = options.network;
     } else if (!process.env.NETWORK) {
-      process.env.NETWORK = "sepolia";
-      console.log("\nNETWORK environment variable not set, defaulting to sepolia.");
+      console.log(`\nUsing NETWORK from environment: ${process.env.NETWORK || "not set"}`);
     }
 
-    const fromBlock = options.fromBlock ? parseInt(options.fromBlock, 10) : undefined;
+    // Set force start block environment variables if provided
+    if (options.forceL1StartBlock) {
+      process.env.FORCE_L1_START_BLOCK = options.forceL1StartBlock;
+      console.log(`\n🔄 Force L1 start block set to: ${options.forceL1StartBlock}`);
+    }
+    if (options.forceL2StartBlock) {
+      process.env.FORCE_L2_START_BLOCK = options.forceL2StartBlock;
+      console.log(`\n🔄 Force L2 start block set to: ${options.forceL2StartBlock}`);
+    }
+
+    const fromBlock = options.fromBlock
+      ? parseInt(options.fromBlock, 10)
+      : options.forceL1StartBlock
+        ? parseInt(options.forceL1StartBlock, 10)
+        : options.forceL2StartBlock
+          ? parseInt(options.forceL2StartBlock, 10)
+          : undefined;
     const toBlock = options.toBlock ? parseInt(options.toBlock, 10) : undefined;
 
     if (options.verbose) {
@@ -155,7 +178,8 @@ async function main(): Promise<void> {
 
     console.log("\n🎉 Dry-run completed successfully!");
   } catch (error) {
-    console.error("\n💥 Fatal error:", error);
+    console.error("\n💥 Fatal error:");
+    logger.error(error, "Fatal error in CLI");
     process.exit(1);
   }
 }
@@ -172,6 +196,7 @@ process.on("SIGTERM", () => {
 });
 
 main().catch((error) => {
-  console.error("Unhandled error:", error);
+  console.error("Unhandled error:");
+  logger.error(error, "Unhandled error in CLI");
   process.exit(1);
 });

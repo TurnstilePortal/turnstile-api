@@ -1,6 +1,7 @@
 import { IAllowListABI } from "@turnstile-portal/l1-artifacts-abi";
 import { createPublicClient, http, type PublicClient } from "viem";
 import { anvil, mainnet, sepolia } from "viem/chains";
+import { logger } from "./logger.js";
 
 // Helper function to get chain by network name
 export function getChainByNetwork(network: string) {
@@ -13,7 +14,7 @@ export function getChainByNetwork(network: string) {
     case "sandbox":
       return anvil;
     default:
-      console.warn(`Unknown network "${network}", using undefined`);
+      logger.warn(`Unknown network "${network}", using undefined`);
       return undefined;
   }
 }

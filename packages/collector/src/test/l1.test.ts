@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockLogger } from "../test/mocks/logger.js";
 
 /**
  * Mock DB layer:
@@ -184,15 +185,11 @@ describe("L1Collector", () => {
 
       mockPublicClient.getLogs.mockResolvedValueOnce(mockPortalLogs).mockResolvedValueOnce(mockInboxLogs);
 
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
       const registrations = await collector.getL1TokenRegistrations(1000, 1100);
 
-      expect(consoleSpy).toHaveBeenCalledWith("No correlated inbox log found for portal registration in tx 0xtx1");
+      expect(mockLogger.warn).toHaveBeenCalledWith("No correlated inbox log found for portal registration in tx 0xtx1");
       expect(mockPublicClient.readContract).not.toHaveBeenCalled();
       expect(registrations).toHaveLength(0);
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle errors during scanning", async () => {

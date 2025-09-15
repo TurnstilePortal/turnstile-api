@@ -1,6 +1,7 @@
 import { L1Collector } from "../collectors/l1.js";
 import { L2Collector } from "../collectors/l2.js";
 import { storeL1TokenAllowListEvents, storeL1TokenRegistrations, storeL2TokenRegistrations } from "../db.js";
+import { logger } from "../utils/logger.js";
 import { BlockProgressService } from "./block-progress.js";
 
 export interface CollectorServiceConfig {
@@ -27,6 +28,9 @@ export class CollectorService {
   private blockProgress = new BlockProgressService();
   private pollingInterval: number;
   private config: ResolvedCollectorServiceConfig;
+  private forceL1StartBlock?: number;
+  private forceL2StartBlock?: number;
+  private isBackfillMode = false;
 
   constructor(config: CollectorServiceConfig) {
     this.config = {
@@ -47,10 +51,36 @@ export class CollectorService {
     this.l1Collector = new L1Collector(this.config.l1);
     this.l2Collector = new L2Collector(this.config.l2);
     this.pollingInterval = this.config.pollingInterval;
+
+    // Check for force start block environment variables
+    const forceL1 = process.env.FORCE_L1_START_BLOCK;
+    const forceL2 = process.env.FORCE_L2_START_BLOCK;
+
+    if (forceL1) {
+      this.forceL1StartBlock = parseInt(forceL1, 10);
+      if (Number.isNaN(this.forceL1StartBlock)) {
+        throw new Error(`Invalid FORCE_L1_START_BLOCK value: ${forceL1}`);
+      }
+      logger.info(`Backfill mode enabled for L1: forcing start from block ${this.forceL1StartBlock}`);
+      this.isBackfillMode = true;
+    }
+
+    if (forceL2) {
+      this.forceL2StartBlock = parseInt(forceL2, 10);
+      if (Number.isNaN(this.forceL2StartBlock)) {
+        throw new Error(`Invalid FORCE_L2_START_BLOCK value: ${forceL2}`);
+      }
+      logger.info(`Backfill mode enabled for L2: forcing start from block ${this.forceL2StartBlock}`);
+      this.isBackfillMode = true;
+    }
+
+    if (this.isBackfillMode) {
+      logger.info("Running in backfill mode - will exit when caught up with blockchain");
+    }
   }
 
   async start() {
-    console.log("Starting CollectorService...");
+    logger.info("Starting CollectorService...");
 
     // Main polling loop
     while (true) {
@@ -58,15 +88,21 @@ export class CollectorService {
         // Fetch and store L1 and L2 registrations
         const isCaughtUp = await this.poll();
 
+        // In backfill mode, exit when caught up
+        if (this.isBackfillMode && isCaughtUp) {
+          logger.info("Backfill complete - caught up with blockchain. Exiting.");
+          process.exit(0);
+        }
+
         // Only wait if we're caught up with both chains
         if (isCaughtUp) {
-          console.log(`Caught up with both chains. Waiting ${this.pollingInterval}ms before next poll...`);
+          logger.info(`Caught up with both chains. Waiting ${this.pollingInterval}ms before next poll...`);
           await new Promise((resolve) => setTimeout(resolve, this.pollingInterval));
         } else {
-          console.log("Still catching up, polling again immediately...");
+          logger.info("Still catching up, polling again immediately...");
         }
       } catch (error) {
-        console.error("CollectorService encountered an error:", error);
+        logger.error(error, "CollectorService encountered an error");
         // Always wait after an error to avoid rapid retry loops
         await new Promise((resolve) => setTimeout(resolve, this.pollingInterval));
       }
@@ -74,18 +110,36 @@ export class CollectorService {
   }
 
   public async poll(): Promise<boolean> {
-    console.log("Polling for new data...");
+    logger.debug("Polling for new data...");
 
     const [lastScannedL1Block, lastScannedL2Block] = await Promise.all([
       this.blockProgress.getLastScannedBlock("L1"),
       this.blockProgress.getLastScannedBlock("L2"),
     ]);
 
-    // Use the configured start block if we haven't scanned any blocks yet
-    const fromL1Block =
-      lastScannedL1Block === 0 && this.config.l1.startBlock ? this.config.l1.startBlock : lastScannedL1Block + 1;
-    const fromL2Block =
-      lastScannedL2Block === 0 && this.config.l2.startBlock ? this.config.l2.startBlock : lastScannedL2Block + 1;
+    // Use forced start blocks if provided, otherwise use normal logic
+    let fromL1Block: number;
+    if (this.forceL1StartBlock !== undefined) {
+      fromL1Block = this.forceL1StartBlock;
+      // Clear the force after first use to continue normally
+      this.forceL1StartBlock = undefined;
+      logger.info(`Using forced L1 start block: ${fromL1Block}`);
+    } else {
+      // Use the configured start block if we haven't scanned any blocks yet
+      fromL1Block =
+        lastScannedL1Block === 0 && this.config.l1.startBlock ? this.config.l1.startBlock : lastScannedL1Block + 1;
+    }
+
+    let fromL2Block: number;
+    if (this.forceL2StartBlock !== undefined) {
+      fromL2Block = this.forceL2StartBlock;
+      // Clear the force after first use to continue normally
+      this.forceL2StartBlock = undefined;
+      logger.info(`Using forced L2 start block: ${fromL2Block}`);
+    } else {
+      // L2: Start from lastScannedBlock (not +1) to re-scan the last block and catch any events that may have been missed
+      fromL2Block = lastScannedL2Block === 0 ? this.config.l2.startBlock || 1 : lastScannedL2Block;
+    }
 
     const [currentL1Block, currentL2Block] = await Promise.all([
       this.l1Collector.getBlockNumber(),
@@ -101,13 +155,13 @@ export class CollectorService {
 
     // Skip if we're already caught up
     if (l1CaughtUp && l2CaughtUp) {
-      console.log(`Already caught up - L1: ${currentL1Block}, L2: ${currentL2Block}`);
+      logger.debug(`Already caught up - L1: ${currentL1Block}, L2: ${currentL2Block}`);
       return true;
     }
 
     // Process L1 if there are blocks to scan
     if (!l1CaughtUp) {
-      console.log(`Scanning L1 blocks ${fromL1Block} to ${toL1Block} (current: ${currentL1Block})`);
+      logger.info(`Scanning L1 blocks ${fromL1Block} to ${toL1Block} (current: ${currentL1Block})`);
 
       // Fetch both allowlist events and registrations in parallel
       const [l1AllowListEvents, l1Registrations] = await Promise.all([
@@ -117,13 +171,13 @@ export class CollectorService {
 
       // Store allowlist events first (proposals and resolutions)
       if (l1AllowListEvents.length > 0) {
-        console.log(`Found ${l1AllowListEvents.length} L1 token allowlist events`);
+        logger.info(`Found ${l1AllowListEvents.length} L1 token allowlist events`);
         await storeL1TokenAllowListEvents(l1AllowListEvents);
       }
 
       // Then store registrations (which have more complete token data)
       if (l1Registrations.length > 0) {
-        console.log(`Found ${l1Registrations.length} L1 token registrations`);
+        logger.info(`Found ${l1Registrations.length} L1 token registrations`);
         await storeL1TokenRegistrations(l1Registrations);
       }
 
@@ -135,11 +189,16 @@ export class CollectorService {
 
     // Process L2 if there are blocks to scan
     if (!l2CaughtUp) {
-      console.log(`Scanning L2 blocks ${fromL2Block} to ${toL2Block} (current: ${currentL2Block})`);
+      const isRescanning = fromL2Block === lastScannedL2Block && lastScannedL2Block > 0;
+      logger.info(`Scanning L2 blocks ${fromL2Block} to ${toL2Block} (current: ${currentL2Block})`);
       const l2Registrations = await this.l2Collector.getL2TokenRegistrations(fromL2Block, toL2Block);
 
       if (l2Registrations.length > 0) {
-        console.log(`Found ${l2Registrations.length} L2 token registrations`);
+        if (isRescanning) {
+          logger.warn(`Found ${l2Registrations.length} L2 token registrations on RESCAN of block ${fromL2Block}`);
+        } else {
+          logger.info(`Found ${l2Registrations.length} L2 token registrations`);
+        }
         await storeL2TokenRegistrations(l2Registrations);
       }
 
@@ -149,7 +208,7 @@ export class CollectorService {
       l2CaughtUp = toL2Block >= currentL2Block;
     }
 
-    console.log(`Polling complete. L1 caught up: ${l1CaughtUp}, L2 caught up: ${l2CaughtUp}`);
+    logger.debug(`Polling complete. L1 caught up: ${l1CaughtUp}, L2 caught up: ${l2CaughtUp}`);
 
     // Return true only if both chains are caught up
     return l1CaughtUp && l2CaughtUp;

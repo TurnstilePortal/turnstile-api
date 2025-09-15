@@ -5,6 +5,7 @@ import { L2Collector, type L2CollectorConfig } from "../collectors/l2.js";
 import * as db from "../db.js";
 import { BlockProgressService } from "../services/block-progress.js";
 import { CollectorService } from "../services/collector-service.js";
+import { mockLogger } from "../test/mocks/logger.js";
 
 vi.mock("../collectors/l1.js");
 vi.mock("../collectors/l2.js");
@@ -168,14 +169,13 @@ describe("CollectorService", () => {
 
     await service.poll();
 
-    // Should resume from last scanned block + 1, not startBlock
+    // Should resume from last scanned block + 1 for L1, not startBlock
     expect(mockL1Collector.getL1TokenRegistrations).toHaveBeenCalledWith(6001, expect.any(Number));
-    expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalledWith(9001, expect.any(Number));
+    // L2 rescans the last block, so it starts from lastScannedBlock (not +1)
+    expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalledWith(9000, expect.any(Number));
   });
 
   it("should skip polling when already caught up", async () => {
-    const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
     (mockBlockProgress.getLastScannedBlock as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(1000) // L1 last scanned
       .mockResolvedValueOnce(2000); // L2 last scanned
@@ -189,9 +189,7 @@ describe("CollectorService", () => {
     expect(mockL1Collector.getL1TokenRegistrations).not.toHaveBeenCalled();
     expect(mockL2Collector.getL2TokenRegistrations).not.toHaveBeenCalled();
     expect(mockBlockProgress.updateLastScannedBlock).not.toHaveBeenCalled();
-    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Already caught up"));
-
-    consoleLogSpy.mockRestore();
+    expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining("Already caught up"));
   });
 
   it("should process only L1 when L2 is caught up", async () => {
@@ -204,11 +202,11 @@ describe("CollectorService", () => {
 
     await service.poll();
 
-    // Should only process L1
+    // Should process both - L1 because it's behind, L2 rescans its last block
     expect(mockL1Collector.getL1TokenRegistrations).toHaveBeenCalled();
-    expect(mockL2Collector.getL2TokenRegistrations).not.toHaveBeenCalled();
+    expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalled();
     expect(mockBlockProgress.updateLastScannedBlock).toHaveBeenCalledWith("L1", expect.any(Number));
-    expect(mockBlockProgress.updateLastScannedBlock).not.toHaveBeenCalledWith("L2", expect.any(Number));
+    expect(mockBlockProgress.updateLastScannedBlock).toHaveBeenCalledWith("L2", expect.any(Number));
   });
 
   it("should process only L2 when L1 is caught up", async () => {
@@ -240,6 +238,7 @@ describe("CollectorService", () => {
 
     // Should respect chunk sizes (1000 for L1, 100 for L2)
     expect(mockL1Collector.getL1TokenRegistrations).toHaveBeenCalledWith(101, 1100); // 1000 block chunk
-    expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalledWith(201, 300); // 100 block chunk
+    // L2 rescans from last block (200), not 201
+    expect(mockL2Collector.getL2TokenRegistrations).toHaveBeenCalledWith(200, 299); // 100 block chunk from 200
   });
 });

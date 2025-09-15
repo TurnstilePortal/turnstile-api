@@ -11,9 +11,6 @@
 		"test": "vitest --run",
 		"coverage": "vitest --run --coverage",
 		"cli": "tsx src/cli.ts",
-		"test:l1": "tsx src/cli.ts --l1",
-		"test:l2": "tsx src/cli.ts --l2",
-		"test:both": "tsx src/cli.ts --both",
 		"lint": "biome lint --fix",
 		"format": "biome format --fix",
 		"check": "biome check --fix"
@@ -33,6 +30,8 @@
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.44.5",
 		"pg": "^8.16.3",
+		"pino": "^9.9.5",
+		"pino-pretty": "^13.1.1",
 		"viem": "^2.37.5"
 	},
 	"devDependencies": {

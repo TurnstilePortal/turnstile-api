@@ -7,6 +7,7 @@ import { getDatabase } from "../db.js";
 import { MetadataService } from "../services/metadata.js";
 import { normalizeL1Address } from "../utils/address.js";
 import { allowListStatusNumberToString } from "../utils/l1.js";
+import { logger } from "../utils/logger.js";
 
 const MESSAGE_SENT_EVENT = getAbiItem({ abi: InboxAbi, name: "MessageSent" });
 const REGISTERED_EVENT = getAbiItem({ abi: ITokenPortalABI, name: "Registered" });
@@ -23,7 +24,7 @@ function getChainByNetwork(network: string) {
     case "sandbox":
       return anvil;
     default:
-      console.warn(`Unknown network "${network}", using undefined`);
+      logger.warn(`Unknown network "${network}", using undefined`);
       return undefined;
   }
 }
@@ -60,7 +61,7 @@ export class L1Collector {
   }
 
   async getL1TokenAllowListEvents(fromBlock: number, toBlock: number): Promise<NewToken[]> {
-    console.log(`Scanning L1 blocks ${fromBlock} to ${toBlock} for Proposed events`);
+    logger.debug(`Scanning L1 blocks ${fromBlock} to ${toBlock} for Proposed events`);
 
     const allowListLogs = await this.publicClient.getLogs({
       address: this.config.allowListAddress,
@@ -73,8 +74,9 @@ export class L1Collector {
 
     for (const log of allowListLogs) {
       if (log.eventName !== "StatusUpdated" || !log.args.addr || !log.args.status) {
-        console.warn(
-          `Skipping invalid allowList StatusUpdated log in tx ${log.transactionHash} with args ${JSON.stringify(log.args)}`,
+        logger.warn(
+          { transactionHash: log.transactionHash, args: log.args },
+          "Skipping invalid allowList StatusUpdated log",
         );
         continue;
       }
@@ -108,7 +110,7 @@ export class L1Collector {
   }
 
   async getL1TokenRegistrations(fromBlock: number, toBlock: number): Promise<NewToken[]> {
-    console.log(`Scanning L1 blocks ${fromBlock} to ${toBlock} for Registered events`);
+    logger.debug(`Scanning L1 blocks ${fromBlock} to ${toBlock} for Registered events`);
 
     const portalLogsPromise = this.publicClient.getLogs({
       address: this.config.portalAddress,
@@ -137,7 +139,7 @@ export class L1Collector {
       const correlatedInboxLog = inboxLogsByTxHash.get(portalLog.transactionHash);
 
       if (!correlatedInboxLog) {
-        console.warn(`No correlated inbox log found for portal registration in tx ${portalLog.transactionHash}`);
+        logger.warn(`No correlated inbox log found for portal registration in tx ${portalLog.transactionHash}`);
         continue;
       }
 

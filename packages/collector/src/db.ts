@@ -2,6 +2,7 @@ import { createDbClient, type DbClient } from "@turnstile-portal/api-common";
 import type { NewToken } from "@turnstile-portal/api-common/schema";
 import { tokens } from "@turnstile-portal/api-common/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "./utils/logger.js";
 
 // Export DbClient type for other modules to use
 export type { DbClient };
@@ -71,7 +72,7 @@ export async function storeL1TokenRegistrations(registrations: NewToken[]): Prom
       })
       .where(eq(tokens.l1Address, registration.l1Address as string));
   }
-  console.log(`Stored ${registrations.length} L1 token registrations.`);
+  logger.info(`Stored ${registrations.length} L1 token registrations.`);
 }
 
 export async function storeL1TokenAllowListEvents(allowListEvents: NewToken[]): Promise<void> {
@@ -80,7 +81,7 @@ export async function storeL1TokenAllowListEvents(allowListEvents: NewToken[]): 
 
   for (const event of allowListEvents) {
     if (!event.l1Address) {
-      console.warn("Skipping allowlist event with no L1 address", event);
+      logger.warn({ event }, "Skipping allowlist event with no L1 address");
       continue;
     }
 
@@ -97,7 +98,7 @@ export async function storeL1TokenAllowListEvents(allowListEvents: NewToken[]): 
       })
       .where(eq(tokens.l1Address, event.l1Address));
   }
-  console.log(`Stored ${allowListEvents.length} L1 token allowlist events.`);
+  logger.info(`Stored ${allowListEvents.length} L1 token allowlist events.`);
 }
 
 export async function storeL2TokenRegistrations(registrations: Partial<NewToken>[]): Promise<void> {
@@ -106,7 +107,7 @@ export async function storeL2TokenRegistrations(registrations: Partial<NewToken>
 
   for (const registration of registrations) {
     if (!registration.l1Address) {
-      console.warn("Skipping L2 registration with no L1 address", registration);
+      logger.warn({ registration }, "Skipping L2 registration with no L1 address");
       continue;
     }
     // MetadataService ensures token exists with metadata, so we just update L2 registration fields
@@ -124,5 +125,5 @@ export async function storeL2TokenRegistrations(registrations: Partial<NewToken>
       })
       .where(eq(tokens.l1Address, registration.l1Address));
   }
-  console.log(`Stored ${registrations.length} L2 token registrations.`);
+  logger.info(`Stored ${registrations.length} L2 token registrations.`);
 }

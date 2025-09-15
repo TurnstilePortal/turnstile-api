@@ -5,6 +5,7 @@ import { anvil, mainnet, sepolia } from "viem/chains";
 import { getDatabase } from "../db.js";
 import { MetadataService } from "../services/metadata.js";
 import { normalizeL1Address, normalizeL2Address } from "../utils/address.js";
+import { logger } from "../utils/logger.js";
 import { scanForRegisterEvents } from "../utils/portal-events.js";
 
 // Helper function to get chain by network name
@@ -18,7 +19,7 @@ function getChainByNetwork(network: string) {
     case "sandbox":
       return anvil;
     default:
-      console.warn(`Unknown network "${network}", using undefined`);
+      logger.warn(`Unknown network "${network}", using undefined`);
       return undefined;
   }
 }
@@ -57,9 +58,20 @@ export class L2Collector {
   }
 
   async getL2TokenRegistrations(fromBlock: number, toBlock: number): Promise<Partial<NewToken>[]> {
-    console.log(`Scanning L2 blocks ${fromBlock} to ${toBlock} for Register events`);
+    logger.debug(`Scanning L2 blocks ${fromBlock} to ${toBlock} for Register events`);
+    logger.debug(`  Portal address: ${this.config.portalAddress}`);
+    logger.debug(`  Node URL: ${this.config.nodeUrl}`);
 
     const events = await scanForRegisterEvents(this.aztecNode, this.config.portalAddress, fromBlock, toBlock);
+    logger.debug(`  Raw events returned: ${events.length}`);
+
+    if (events.length === 0) {
+      logger.debug(`  No Register events found in L2 blocks ${fromBlock}-${toBlock}`);
+    } else {
+      logger.debug(
+        `  Found ${events.length} Register event(s) at blocks: ${events.map((e) => e.blockNumber).join(", ")}`,
+      );
+    }
 
     const registrations: Partial<NewToken>[] = [];
 
@@ -88,13 +100,18 @@ export class L2Collector {
       // const msgSender = publicInputs.publicTeardownCallRequest.msgSender;
 
       const l1Address = normalizeL1Address(event.ethToken.toString());
+      const l2Address = normalizeL2Address(event.aztecToken.toString());
+
+      logger.debug(
+        `  Processing registration: L1=${l1Address}, L2=${l2Address}, Block=${event.blockNumber}, TxIndex=${event.txIndex}`,
+      );
 
       // Ensure token metadata exists before storing L2 registration
       await this.metadataService.ensureTokenMetadata(l1Address);
 
       registrations.push({
         l1Address,
-        l2Address: normalizeL2Address(event.aztecToken.toString()),
+        l2Address,
         l2RegistrationBlock: event.blockNumber,
         l2RegistrationTxIndex: event.txIndex,
         l2RegistrationLogIndex: event.logIndex,
@@ -103,7 +120,7 @@ export class L2Collector {
     }
 
     if (registrations.length > 0) {
-      console.log(`Found ${registrations.length} L2 token registration(s)`);
+      logger.debug(`Found ${registrations.length} L2 token registration(s)`);
     }
 
     return registrations;

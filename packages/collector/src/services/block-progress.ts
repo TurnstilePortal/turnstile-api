@@ -1,6 +1,7 @@
 import { type BlockProgress, blockProgress } from "@turnstile-portal/api-common/schema";
 import { eq } from "drizzle-orm";
 import { getDatabase } from "../db.js";
+import { logger } from "../utils/logger.js";
 
 export class BlockProgressService {
   private db = getDatabase();
@@ -48,7 +49,7 @@ export class BlockProgressService {
       });
     }
 
-    console.log(`Updated ${chain} last scanned block to ${blockNumber}`);
+    logger.debug(`Updated ${chain} last scanned block to ${blockNumber}`);
   }
 
   async getProgress(chain: "L1" | "L2"): Promise<BlockProgress | null> {
@@ -63,6 +64,6 @@ export class BlockProgressService {
       lastScannedBlock: 0,
       lastScanTimestamp: new Date(),
     });
-    console.log(`Initialized ${chain} block progress at block 0`);
+    logger.debug(`Initialized ${chain} block progress at block 0`);
   }
 }

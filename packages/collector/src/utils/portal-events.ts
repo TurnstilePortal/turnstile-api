@@ -4,6 +4,7 @@ import type { GetPublicLogsResponse } from "@aztec/stdlib/interfaces/client";
 import type { LogId } from "@aztec/stdlib/logs";
 import { PortalContract } from "@turnstile-portal/aztec-artifacts";
 import { decodePublicAztecEvents } from "./decode-aztec-events";
+import { logger } from "./logger.js";
 
 export interface RegisterEvent {
   logId: LogId;
@@ -75,6 +76,15 @@ export async function scanForRegisterEvents(
     contractAddress: AztecAddress.fromString(portalAddress),
   };
 
+  logger.debug({ fromBlock, toBlock, contractAddress: portalAddress }, "Calling Aztec node getPublicLogs with filter");
+
   const response = await nodeClient.getPublicLogs(filter);
-  return extractRegisterEvents(response.logs);
+
+  logger.debug(`Aztec node returned ${response.logs.length} total logs for portal contract`);
+
+  const registerEvents = await extractRegisterEvents(response.logs);
+
+  logger.debug(`Filtered to ${registerEvents.length} Register events`);
+
+  return registerEvents;
 }

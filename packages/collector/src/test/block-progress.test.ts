@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DbClient } from "../db.js";
 import * as db from "../db.js";
 import { BlockProgressService } from "../services/block-progress.js";
+import { mockLogger } from "../test/mocks/logger.js";
 
 vi.mock("../db.js");
 
@@ -116,14 +117,12 @@ describe("BlockProgressService", () => {
     });
 
     it("should log the update", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
       // Mock the select check for existing record
       mockDb.limit.mockResolvedValueOnce([{ id: 1 }]);
 
       await service.updateLastScannedBlock("L1", 7500);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith("Updated L1 last scanned block to 7500");
-      consoleLogSpy.mockRestore();
+      expect(mockLogger.debug).toHaveBeenCalledWith("Updated L1 last scanned block to 7500");
     });
   });
 
