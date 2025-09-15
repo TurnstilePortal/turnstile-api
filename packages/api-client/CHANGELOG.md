@@ -1,5 +1,11 @@
 # @turnstile-portal/api-client
 
+## 0.0.12
+
+### Patch Changes
+
+- a705645: Standardize how options are passed to the client
+
 ## 0.0.11
 
 ### Patch Changes
