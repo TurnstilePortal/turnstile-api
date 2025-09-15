@@ -1,5 +1,12 @@
 # @turnstile-portal/collector
 
+## 0.0.12
+
+### Patch Changes
+
+- a705645: Add more logging & make the collector reprocess the last l2 block because we're missing events
+  - @turnstile-portal/api-common@0.0.12
+
 ## 0.0.11
 
 ### Patch Changes
